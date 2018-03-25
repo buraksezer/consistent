@@ -68,6 +68,18 @@ func New(members []Member, config *Config) *Consistent {
 	return c
 }
 
+func (c *Consistent) GetMembers() []Member {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	// Create a thread-safe copy of member list.
+	members := []Member{}
+	for _, member := range c.members {
+		members = append(members, *member)
+	}
+	return members
+}
+
 func (c *Consistent) AverageLoad() float64 {
 	avgLoad := float64(c.partitionCount/uint64(len(c.members))) * c.config.LoadFactor
 	return math.Ceil(avgLoad)
