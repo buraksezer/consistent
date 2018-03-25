@@ -115,7 +115,6 @@ func (c *Consistent) distributePartitions() {
 func (c *Consistent) add(member Member) {
 	for i := 0; i < c.config.ReplicationFactor; i++ {
 		key := []byte(fmt.Sprintf("%s%d", member.Name(), i))
-		fmt.Println(c.hasher)
 		h := c.hasher.Sum64(key)
 		c.ring[h] = &member
 		c.sortedSet = append(c.sortedSet, h)
