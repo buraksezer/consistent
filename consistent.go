@@ -21,14 +21,6 @@ type Member interface {
 	Name() string
 }
 
-// Hasher is responsible for generating unsigned, 64 bit hash of provided byte slice.
-// Hasher should minimize collisions (generating same hash for different byte slice)
-// and while performance is also important fast functions are preferable (i.e.
-// you can use FarmHash family).
-type Hasher interface {
-	Sum64([]byte) uint64
-}
-
 type Config struct {
 	Hasher            Hasher
 	PartitionCount    int
@@ -40,21 +32,27 @@ type Config struct {
 type Consistent struct {
 	mu sync.RWMutex
 
-	config     *Config
-	hasher     Hasher
-	sortedSet  []uint64
-	members    map[string]*Member
-	partitions map[int]*Member
-	ring       map[uint64]*Member
+	config         *Config
+	hasher         Hasher
+	sortedSet      []uint64
+	partitionCount uint64
+	members        map[string]*Member
+	partitions     map[int]*Member
+	ring           map[uint64]*Member
 }
 
 // New creates a new Consistent object.
 func New(members []Member, config *Config) *Consistent {
 	c := &Consistent{
+		config:         config,
 		members:        make(map[string]*Member),
-		partitionCount: uint64(partitionCount),
+		partitionCount: uint64(config.PartitionCount),
 		ring:           make(map[uint64]*Member),
 	}
+	if config.Hasher == nil {
+		panic("Hasher cannot be nil")
+	}
+	c.hasher = config.Hasher
 	for _, member := range members {
 		c.add(member)
 	}
@@ -67,24 +65,26 @@ func (c *Consistent) distributeWithLoad(
 	avgLoad float64,
 	partitions map[int]*Member,
 	loads map[string]float64) {
+	// TODO: Review this shit.
 	for {
 		i := c.sortedSet[idx]
-		member := c.ring[i]
+		tmp := c.ring[i]
+		member := *tmp
 		load := loads[member.Name()]
 		if load+1 <= avgLoad {
-			partitions[partID] = member
+			partitions[partID] = &member
 			loads[member.Name()]++
 			return
 		}
 		idx++
-		if idx >= len(c.members) {
+		if idx >= len(c.sortedSet) {
 			idx = 0
 		}
 	}
 }
 
 func (c *Consistent) distributePartitions() {
-	avgLoad := float64(c.partitionCount/uint64(len(c.members))) * 1.25
+	avgLoad := float64(c.partitionCount/uint64(len(c.members))) * c.config.LoadFactor
 	avgLoad = math.Ceil(avgLoad)
 	loads := make(map[string]float64)
 	partitions := make(map[int]*Member)
@@ -105,8 +105,9 @@ func (c *Consistent) distributePartitions() {
 }
 
 func (c *Consistent) add(member Member) {
-	for i := 0; i < replicationFactor; i++ {
+	for i := 0; i < c.config.ReplicationFactor; i++ {
 		key := []byte(fmt.Sprintf("%s%d", member.Name(), i))
+		fmt.Println(c.hasher)
 		h := c.hasher.Sum64(key)
 		c.ring[h] = &member
 		c.sortedSet = append(c.sortedSet, h)
@@ -150,7 +151,7 @@ func (c *Consistent) Remove(name string) {
 		return
 	}
 
-	for i := 0; i < replicationFactor; i++ {
+	for i := 0; i < c.config.ReplicationFactor; i++ {
 		key := []byte(fmt.Sprintf("%s%d", name, i))
 		h := c.hasher.Sum64(key)
 		delete(c.ring, h)
@@ -183,7 +184,7 @@ func (c *Consistent) GetPartitionOwner(partID int) Member {
 
 	member, ok := c.partitions[partID]
 	if !ok {
-		return Member{}
+		return nil
 	}
 	// Create a thread-safe copy of member and return it.
 	return *member
