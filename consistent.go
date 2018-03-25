@@ -185,8 +185,9 @@ func (c *Consistent) Remove(name string) {
 }
 
 // FindPartitionID returns partition id for given key.
-func (c *Consistent) FindPartitionID(key uint64) int {
-	return int(key % c.partitionCount)
+func (c *Consistent) FindPartitionID(key []byte) int {
+	hkey := c.hasher.Sum64(key)
+	return int(hkey % c.partitionCount)
 }
 
 // GetPartitionOwner returns the owner of the given partition.
@@ -203,7 +204,7 @@ func (c *Consistent) GetPartitionOwner(partID int) Member {
 }
 
 // LocateKey finds a home for given key
-func (c *Consistent) LocateKey(key uint64) Member {
+func (c *Consistent) LocateKey(key []byte) Member {
 	partID := c.FindPartitionID(key)
 	return c.GetPartitionOwner(partID)
 }
