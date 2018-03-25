@@ -68,12 +68,13 @@ func New(members []Member, config *Config) *Consistent {
 	return c
 }
 
-func (c *Consistent) distributeWithLoad(
-	partID, idx int,
-	avgLoad float64,
-	partitions map[int]*Member,
-	loads map[string]float64) {
-	// TODO: Review this shit.
+func (c *Consistent) AverageLoad() float64 {
+	avgLoad := float64(c.partitionCount/uint64(len(c.members))) * c.config.LoadFactor
+	return math.Ceil(avgLoad)
+}
+
+func (c *Consistent) distributeWithLoad(partID, idx int, partitions map[int]*Member, loads map[string]float64) {
+	avgLoad := c.AverageLoad()
 	for {
 		i := c.sortedSet[idx]
 		tmp := c.ring[i]
@@ -92,8 +93,6 @@ func (c *Consistent) distributeWithLoad(
 }
 
 func (c *Consistent) distributePartitions() {
-	avgLoad := float64(c.partitionCount/uint64(len(c.members))) * c.config.LoadFactor
-	avgLoad = math.Ceil(avgLoad)
 	loads := make(map[string]float64)
 	partitions := make(map[int]*Member)
 
@@ -107,7 +106,7 @@ func (c *Consistent) distributePartitions() {
 		if idx >= len(c.sortedSet) {
 			idx = 0
 		}
-		c.distributeWithLoad(int(partID), idx, avgLoad, partitions, loads)
+		c.distributeWithLoad(int(partID), idx, partitions, loads)
 	}
 	c.partitions = partitions
 }
