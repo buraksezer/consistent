@@ -177,12 +177,6 @@ func (c *Consistent) FindPartitionID(key uint64) int {
 	return int(key % c.partitionCount)
 }
 
-// LocateKey finds a home for given key. It returns partition ID and member's name respectively.
-func (c *Consistent) LocateKey(key uint64) (int, Member) {
-	partID := c.FindPartitionID(key)
-	return partID, c.GetPartitionOwner(partID)
-}
-
 // GetPartitionOwner returns the owner of the given partition.
 func (c *Consistent) GetPartitionOwner(partID int) Member {
 	c.mu.RLock()
@@ -194,6 +188,12 @@ func (c *Consistent) GetPartitionOwner(partID int) Member {
 	}
 	// Create a thread-safe copy of member and return it.
 	return *member
+}
+
+// LocateKey finds a home for given key
+func (c *Consistent) LocateKey(key uint64) Member {
+	partID := c.FindPartitionID(key)
+	return c.GetPartitionOwner(partID)
 }
 
 // GetPartitionBackups returns backup members to replicate a partition's data.
