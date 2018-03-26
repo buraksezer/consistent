@@ -60,6 +60,7 @@ func New(members []Member, config *Config) *Consistent {
 	if config.Hasher == nil {
 		panic("Hasher cannot be nil")
 	}
+	// TODO: Check configuration here
 	c.hasher = config.Hasher
 	for _, member := range members {
 		c.add(member)
@@ -87,7 +88,13 @@ func (c *Consistent) AverageLoad() float64 {
 
 func (c *Consistent) distributeWithLoad(partID, idx int, partitions map[int]*Member, loads map[string]float64) {
 	avgLoad := c.AverageLoad()
+	var count int
 	for {
+		count++
+		if count >= len(c.sortedSet) {
+			// User needs to decrease partition count, increase member count or increase load factor.
+			panic("not enough room to distribute partitions")
+		}
 		i := c.sortedSet[idx]
 		tmp := c.ring[i]
 		member := *tmp

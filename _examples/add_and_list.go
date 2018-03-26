@@ -21,12 +21,12 @@ func (h hasher) Sum64(data []byte) uint64 {
 
 func main() {
 	members := []consistent.Member{}
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 8; i++ {
 		member := Member(fmt.Sprintf("node%d.olricmq", i))
 		members = append(members, member)
 	}
 	cfg := &consistent.Config{
-		PartitionCount:    271,
+		PartitionCount:    71,
 		ReplicationFactor: 20,
 		LoadFactor:        1.25,
 		Hasher:            hasher{},
@@ -49,5 +49,5 @@ func main() {
 	fmt.Println("average load:", c.AverageLoad())
 	fmt.Println("owners:", owners)
 	fmt.Println("backups:", backups)
-	fmt.Println(c.GetMembers())
+	fmt.Println("members:", c.GetMembers())
 }
