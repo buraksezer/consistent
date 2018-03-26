@@ -1,3 +1,26 @@
+// Copyright (c) 2018 Burak Sezer
+// All rights reserved.
+//
+// This code is licensed under the MIT License.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files(the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions :
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 // Package consistent provides a consistent hashing function with bounded loads.
 // For more information about the underlying algorithm, please take a look at
 // https://research.googleblog.com/2017/04/consistent-hashing-with-bounded-loads.html
@@ -13,8 +36,8 @@ import (
 )
 
 var (
-	ErrInsufficientHostCount = errors.New("insufficient host count")
-	ErrMemberNotFound        = errors.New("member could not be found in circle")
+	ErrInsufficientMemberCount = errors.New("insufficient member count")
+	ErrMemberNotFound          = errors.New("member could not be found in circle")
 )
 
 // Hasher is responsible for generating unsigned, 64 bit hash of provided byte slice.
@@ -44,6 +67,7 @@ type Consistent struct {
 	hasher         Hasher
 	sortedSet      []uint64
 	partitionCount uint64
+	loads          map[string]float64
 	members        map[string]*Member
 	partitions     map[int]*Member
 	ring           map[uint64]*Member
@@ -65,7 +89,9 @@ func New(members []Member, config *Config) *Consistent {
 	for _, member := range members {
 		c.add(member)
 	}
-	c.distributePartitions()
+	if members != nil {
+		c.distributePartitions()
+	}
 	return c
 }
 
@@ -128,6 +154,7 @@ func (c *Consistent) distributePartitions() {
 		c.distributeWithLoad(int(partID), idx, partitions, loads)
 	}
 	c.partitions = partitions
+	c.loads = loads
 }
 
 func (c *Consistent) add(member Member) {
@@ -141,7 +168,7 @@ func (c *Consistent) add(member Member) {
 	sort.Slice(c.sortedSet, func(i int, j int) bool {
 		return c.sortedSet[i] < c.sortedSet[j]
 	})
-	// Storing member at this map is useful to find backup hosts of a partition.
+	// Storing member at this map is useful to find backup members of a partition.
 	c.members[member.Name()] = &member
 }
 
@@ -191,6 +218,18 @@ func (c *Consistent) Remove(name string) {
 	c.distributePartitions()
 }
 
+func (c *Consistent) LoadDistribution() map[string]float64 {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	// Create a thread-safe copy
+	res := make(map[string]float64)
+	for member, load := range c.loads {
+		res[member] = load
+	}
+	return res
+}
+
 // FindPartitionID returns partition id for given key.
 func (c *Consistent) FindPartitionID(key []byte) int {
 	hkey := c.hasher.Sum64(key)
@@ -220,7 +259,7 @@ func (c *Consistent) LocateKey(key []byte) Member {
 func (c *Consistent) GetPartitionBackups(partID, backupCount int) ([]Member, error) {
 	res := []Member{}
 	if backupCount > len(c.members)-1 {
-		return res, ErrInsufficientHostCount
+		return res, ErrInsufficientMemberCount
 	}
 
 	var ownerKey uint64
