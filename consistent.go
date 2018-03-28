@@ -24,6 +24,21 @@
 // Package consistent provides a consistent hashing function with bounded loads.
 // For more information about the underlying algorithm, please take a look at
 // https://research.googleblog.com/2017/04/consistent-hashing-with-bounded-loads.html
+//
+// Example Use:
+// 	cfg := consistent.Config{
+// 		PartitionCount:    71,
+// 		ReplicationFactor: 20,
+// 		Load:              1.25,
+// 		Hasher:            hasher{},
+//	}
+//
+//	c := consistent.New(members, cfg)
+//	c.Add(myMember)
+//
+//	key := []byte("my-key")
+//	member := c.LocateKey(key)
+//
 package consistent
 
 import (
@@ -36,8 +51,11 @@ import (
 )
 
 var (
+	//ErrInsufficientMemberCount represents an error which means there are not enough members to complete the task.
 	ErrInsufficientMemberCount = errors.New("insufficient member count")
-	ErrMemberNotFound          = errors.New("member could not be found in circle")
+
+	// ErrMemberNotFound represents an error which means requested member could not be found in consistent hash ring.
+	ErrMemberNotFound = errors.New("member could not be found in ring")
 )
 
 // Hasher is responsible for generating unsigned, 64 bit hash of provided byte slice.
@@ -48,22 +66,24 @@ type Hasher interface {
 	Sum64([]byte) uint64
 }
 
+// Member interface represents a member in consistent hash ring.
 type Member interface {
-	Name() string
+	String() string
 }
 
+// Config represents a structure to control consistent package.
 type Config struct {
 	Hasher            Hasher
 	PartitionCount    int
 	ReplicationFactor int
-	LoadFactor        float64
+	Load              float64
 }
 
 // Consistent holds the information about the members of the consistent hash circle.
 type Consistent struct {
 	mu sync.RWMutex
 
-	config         *Config
+	config         Config
 	hasher         Hasher
 	sortedSet      []uint64
 	partitionCount uint64
@@ -73,8 +93,8 @@ type Consistent struct {
 	ring           map[uint64]*Member
 }
 
-// New creates a new Consistent object.
-func New(members []Member, config *Config) *Consistent {
+// New creates and returns a new Consistent object.
+func New(members []Member, config Config) *Consistent {
 	c := &Consistent{
 		config:         config,
 		members:        make(map[string]*Member),
@@ -95,6 +115,7 @@ func New(members []Member, config *Config) *Consistent {
 	return c
 }
 
+// GetMembers returns a thread-safe copy of members.
 func (c *Consistent) GetMembers() []Member {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -107,8 +128,9 @@ func (c *Consistent) GetMembers() []Member {
 	return members
 }
 
+// AverateLoad exposes the current average load.
 func (c *Consistent) AverageLoad() float64 {
-	avgLoad := float64(c.partitionCount/uint64(len(c.members))) * c.config.LoadFactor
+	avgLoad := float64(c.partitionCount/uint64(len(c.members))) * c.config.Load
 	return math.Ceil(avgLoad)
 }
 
@@ -124,10 +146,10 @@ func (c *Consistent) distributeWithLoad(partID, idx int, partitions map[int]*Mem
 		i := c.sortedSet[idx]
 		tmp := c.ring[i]
 		member := *tmp
-		load := loads[member.Name()]
+		load := loads[member.String()]
 		if load+1 <= avgLoad {
 			partitions[partID] = &member
-			loads[member.Name()]++
+			loads[member.String()]++
 			return
 		}
 		idx++
@@ -159,7 +181,7 @@ func (c *Consistent) distributePartitions() {
 
 func (c *Consistent) add(member Member) {
 	for i := 0; i < c.config.ReplicationFactor; i++ {
-		key := []byte(fmt.Sprintf("%s%d", member.Name(), i))
+		key := []byte(fmt.Sprintf("%s%d", member.String(), i))
 		h := c.hasher.Sum64(key)
 		c.ring[h] = &member
 		c.sortedSet = append(c.sortedSet, h)
@@ -169,7 +191,7 @@ func (c *Consistent) add(member Member) {
 		return c.sortedSet[i] < c.sortedSet[j]
 	})
 	// Storing member at this map is useful to find backup members of a partition.
-	c.members[member.Name()] = &member
+	c.members[member.String()] = &member
 }
 
 // Add adds a new member to the consistent hash circle.
@@ -177,7 +199,7 @@ func (c *Consistent) Add(member Member) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, ok := c.members[member.Name()]; ok {
+	if _, ok := c.members[member.String()]; ok {
 		// We have already have this. Quit immediately.
 		return
 	}
@@ -218,6 +240,7 @@ func (c *Consistent) Remove(name string) {
 	c.distributePartitions()
 }
 
+// LoadDistribution exposes load distribution of members.
 func (c *Consistent) LoadDistribution() map[string]float64 {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -255,20 +278,23 @@ func (c *Consistent) LocateKey(key []byte) Member {
 	return c.GetPartitionOwner(partID)
 }
 
-// GetPartitionBackups returns backup members to replicate a partition's data.
-func (c *Consistent) GetPartitionBackups(partID, backupCount int) ([]Member, error) {
+// GetClosestN returns the closest N member to a key in the hash ring. This may be useful to find members for replication.
+func (c *Consistent) GetClosestN(key []byte, count int) ([]Member, error) {
 	res := []Member{}
-	if backupCount > len(c.members)-1 {
+	if count > len(c.members)-1 {
 		return res, ErrInsufficientMemberCount
 	}
 
 	var ownerKey uint64
+
+	partID := c.FindPartitionID(key)
 	owner := c.GetPartitionOwner(partID)
+	// Hash and sort all the names.
 	keys := []uint64{}
 	kmems := make(map[uint64]*Member)
 	for name, member := range c.members {
 		key := c.hasher.Sum64([]byte(name))
-		if name == owner.Name() {
+		if name == owner.String() {
 			ownerKey = key
 		}
 		keys = append(keys, key)
@@ -287,8 +313,8 @@ func (c *Consistent) GetPartitionBackups(partID, backupCount int) ([]Member, err
 		idx++
 	}
 
-	// Find backup members.
-	for len(res) < backupCount {
+	// Find the closest members.
+	for len(res) < count {
 		idx++
 		if idx >= len(keys) {
 			idx = 0

@@ -29,18 +29,18 @@ import (
 	"testing"
 )
 
-func newConfig() *Config {
-	return &Config{
+func newConfig() Config {
+	return Config{
 		PartitionCount:    23,
 		ReplicationFactor: 20,
-		LoadFactor:        1.25,
+		Load:              1.25,
 		Hasher:            hasher{},
 	}
 }
 
 type testMember string
 
-func (tm testMember) Name() string {
+func (tm testMember) String() string {
 	return string(tm)
 }
 
@@ -58,13 +58,13 @@ func TestConsistentAdd(t *testing.T) {
 	members := make(map[string]struct{})
 	for i := 0; i < 8; i++ {
 		member := testMember(fmt.Sprintf("node%d.olricmq", i))
-		members[member.Name()] = struct{}{}
+		members[member.String()] = struct{}{}
 		c.Add(member)
 	}
-	for member, _ := range members {
+	for member := range members {
 		found := false
 		for _, mem := range c.GetMembers() {
-			if member == mem.Name() {
+			if member == mem.String() {
 				found = true
 			}
 		}
@@ -86,7 +86,7 @@ func TestConsistentRemove(t *testing.T) {
 		t.Fatalf("inserted member count is different")
 	}
 	for _, member := range members {
-		c.Remove(member.Name())
+		c.Remove(member.String())
 	}
 	if len(c.GetMembers()) != 0 {
 		t.Fatalf("member count should be zero")
@@ -123,7 +123,7 @@ func TestConsistentLocateKey(t *testing.T) {
 	members := make(map[string]struct{})
 	for i := 0; i < 8; i++ {
 		member := testMember(fmt.Sprintf("node%d.olricmq", i))
-		members[member.Name()] = struct{}{}
+		members[member.String()] = struct{}{}
 		c.Add(member)
 	}
 	res = c.LocateKey(key)
@@ -141,14 +141,13 @@ func TestConsistentInsufficientMemberCount(t *testing.T) {
 	cfg := newConfig()
 	c := New(members, cfg)
 	key := []byte("OlricMQ")
-	partID := c.FindPartitionID(key)
-	_, err := c.GetPartitionBackups(partID, 30)
+	_, err := c.GetClosestN(key, 30)
 	if err != ErrInsufficientMemberCount {
 		t.Errorf("Expected ErrInsufficientMemberCount(%v), Got: %v", ErrInsufficientMemberCount, err)
 	}
 }
 
-func TestConsistentBackupMembers(t *testing.T) {
+func TestConsistentClosestMembers(t *testing.T) {
 	members := []Member{}
 	for i := 0; i < 8; i++ {
 		member := testMember(fmt.Sprintf("node%d.olricmq", i))
@@ -157,18 +156,18 @@ func TestConsistentBackupMembers(t *testing.T) {
 	cfg := newConfig()
 	c := New(members, cfg)
 	key := []byte("OlricMQ")
-	partID := c.FindPartitionID(key)
-	backups, err := c.GetPartitionBackups(partID, 2)
+	closestn, err := c.GetClosestN(key, 2)
 	if err != nil {
 		t.Errorf("Expected nil, Got: %v", err)
 	}
-	if len(backups) != 2 {
-		t.Errorf("Expected backup count is 2. Got: %d", len(backups))
+	if len(closestn) != 2 {
+		t.Errorf("Expected closest member count is 2. Got: %d", len(closestn))
 	}
+	partID := c.FindPartitionID(key)
 	owner := c.GetPartitionOwner(partID)
-	for _, backup := range backups {
-		if backup.Name() == owner.Name() {
-			t.Fatalf("Backup is equal the partition owner: %s", owner.Name())
+	for _, cl := range closestn {
+		if cl.String() == owner.String() {
+			t.Fatalf("Backup is equal the partition owner: %s", owner.String())
 		}
 	}
 }

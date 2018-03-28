@@ -12,7 +12,7 @@ import (
 
 type Member string
 
-func (m Member) Name() string {
+func (m Member) String() string {
 	return string(m)
 }
 
@@ -32,10 +32,10 @@ func main() {
 		member := Member(fmt.Sprintf("node%d.olricmq", i))
 		members = append(members, member)
 	}
-	cfg := &consistent.Config{
+	cfg := consistent.Config{
 		PartitionCount:    271,
 		ReplicationFactor: 40,
-		LoadFactor:        1.2,
+		Load:              1.2,
 		Hasher:            hasher{},
 	}
 	c := consistent.New(members, cfg)
@@ -48,7 +48,7 @@ func main() {
 	for i := 0; i < keyCount; i++ {
 		rand.Read(key)
 		member := c.LocateKey(key)
-		distribution[member.Name()]++
+		distribution[member.String()]++
 	}
 	for member, count := range distribution {
 		fmt.Printf("member: %s, key count: %d\n", member, count)

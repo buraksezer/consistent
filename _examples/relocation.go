@@ -11,7 +11,7 @@ import (
 
 type Member string
 
-func (m Member) Name() string {
+func (m Member) String() string {
 	return string(m)
 }
 
@@ -32,12 +32,12 @@ func main() {
 		member := Member(fmt.Sprintf("node%d.olricmq", i))
 		members = append(members, member)
 	}
-	// Modify PartitionCount, ReplicationFactor and LoadFactor to increase or decrease
+	// Modify PartitionCount, ReplicationFactor and Load to increase or decrease
 	// relocation ratio.
-	cfg := &consistent.Config{
+	cfg := consistent.Config{
 		PartitionCount:    271,
 		ReplicationFactor: 20,
-		LoadFactor:        1.25,
+		Load:              1.25,
 		Hasher:            hasher{},
 	}
 	c := consistent.New(members, cfg)
@@ -45,7 +45,7 @@ func main() {
 	// Store current layout of partitions
 	owners := make(map[int]string)
 	for partID := 0; partID < cfg.PartitionCount; partID++ {
-		owners[partID] = c.GetPartitionOwner(partID).Name()
+		owners[partID] = c.GetPartitionOwner(partID).String()
 	}
 
 	// Add a new member
@@ -56,9 +56,9 @@ func main() {
 	var changed int
 	for partID, member := range owners {
 		owner := c.GetPartitionOwner(partID)
-		if member != owner.Name() {
+		if member != owner.String() {
 			changed++
-			fmt.Printf("partID: %3d moved to %s from %s\n", partID, owner.Name(), member)
+			fmt.Printf("partID: %3d moved to %s from %s\n", partID, owner.String(), member)
 		}
 	}
 	fmt.Printf("\n%d%% of the partitions are relocated\n", (100*changed)/cfg.PartitionCount)
