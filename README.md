@@ -165,6 +165,57 @@ func main() {
 }
 ```
 
+Another useful example is relocation_percentage.go. It creates a `consistent` object with 8 members and distributes partitions among them. Then adds 9th member, 
+here is the result with a proper configuration and hash function:
+
+```
+bloom:consistent burak$ go run _examples/relocation_percentage.go
+partID: 218 moved to node2.olricmq from node0.olricmq
+partID: 173 moved to node9.olricmq from node3.olricmq
+partID: 225 moved to node7.olricmq from node0.olricmq
+partID:  85 moved to node9.olricmq from node7.olricmq
+partID: 220 moved to node5.olricmq from node0.olricmq
+partID:  33 moved to node9.olricmq from node5.olricmq
+partID: 254 moved to node9.olricmq from node4.olricmq
+partID:  71 moved to node9.olricmq from node3.olricmq
+partID: 236 moved to node9.olricmq from node2.olricmq
+partID: 118 moved to node9.olricmq from node3.olricmq
+partID: 233 moved to node3.olricmq from node0.olricmq
+partID:  50 moved to node9.olricmq from node4.olricmq
+partID: 252 moved to node9.olricmq from node2.olricmq
+partID: 121 moved to node9.olricmq from node2.olricmq
+partID: 259 moved to node9.olricmq from node4.olricmq
+partID:  92 moved to node9.olricmq from node7.olricmq
+partID: 152 moved to node9.olricmq from node3.olricmq
+partID: 105 moved to node9.olricmq from node2.olricmq
+
+6% of the partitions are relocated
+```
+
+Moved partition count is highly depends on your configuration and quailty of hash function. You should modify the configuration to find an optimum set of configuration
+for your system.
+
+load_distribution.go is also useful to understand load distribution. It creates a `consistent` object with 8 members and locates 1M key. It also calculates average 
+load which cannot be exceeded by any member. Here is the result:
+
+```
+Maximum key count for a member should be around this:  147602
+member: node2.olricmq, key count: 100362
+member: node5.olricmq, key count: 99448
+member: node0.olricmq, key count: 147735
+member: node3.olricmq, key count: 103455
+member: node6.olricmq, key count: 147069
+member: node1.olricmq, key count: 121566
+member: node4.olricmq, key count: 147932
+member: node7.olricmq, key count: 132433
+```
+
+Average load can be calculated by using the following formula:
+
+```
+load := (consistent.AverageLoad() * float64(keyCount)) / float64(config.PartitionCount)
+```
+
 Contributions
 -------------
 Please don't hesitate to fork the project and send a pull request or just e-mail me to ask questions and share ideas.
