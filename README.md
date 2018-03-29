@@ -8,9 +8,7 @@ For detailed information about the concept, you should take a look at the follow
 
 * [Consistent Hashing with Bounded Loads on Google Research Blog](https://research.googleblog.com/2017/04/consistent-hashing-with-bounded-loads.html)
 * [Improving load balancing with a new consistent-hashing algorithm on Vimeo Engineering Blog](https://medium.com/vimeo-engineering-blog/improving-load-balancing-with-a-new-consistent-hashing-algorithm-9f1bd75709ed)
-* [Consistent Hashing with Bounded Loads paper on arXiv](https://arxiv.org/abs/1608.0135://arxiv.org/abs/1608.01350)
-
-**Warning:** This package is still too young. Please don't hesitate to send PRs or share your ideas.
+* [Consistent Hashing with Bounded Loads paper on arXiv](https://arxiv.org/abs/1608.0135)
 
 Table of Content
 ----------------
@@ -30,7 +28,7 @@ In this package's context, the keys are distributed among partitions and partiti
 When you create a new consistent instance or call `Add/Remove`:
 
 * The member's name is hashed and inserted it into the hash ring,
-* Average load is calculated by the algorithm which's defined in the paper,
+* Average load is calculated by the algorithm defined in the paper,
 * Partitions are distributed among members by hashing partition IDs and any of them don't exceed the average load.
 
 Average load cannot be exceeded. So if all the members are loaded at the maximum while trying to add a new member, it panics.
@@ -61,11 +59,21 @@ Configuration
 -------------
 
 ```go
-cfg := &consistent.Config{
-        PartitionCount:    71,
-        ReplicationFactor: 20,
-        Load:              1.25,
-        Hasher:            hasher{},
+type Config struct {
+	// Hasher is responsible for generating unsigned, 64 bit hash of provided byte slice.
+	Hasher Hasher
+
+	// Keys are distributed among partitions. Prime numbers are good to
+	// distribute keys uniformly. Select a big PartitionCount if you have
+	// to many keys.
+	PartitionCount int
+
+	// Members are replicated on consistent hash ring. This number means that a member
+	// how many times replicated on the ring.
+	ReplicationFactor int
+
+	// Load is used to calculate average load. See the code, the paper and Google's blog post to learn about it.
+	Load float64
 }
 ```
 

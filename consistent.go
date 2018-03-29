@@ -33,10 +33,21 @@
 // 		Hasher:            hasher{},
 //	}
 //
+//      // Create a new consistent object
+//      // You may call this with a list of members
+//      // instead of adding them one by one.
 //	c := consistent.New(members, cfg)
+//
+//      // myMember struct just needs to implement a String method.
+//      // New/Add/Remove distributes partitions among membes using the algorithm
+//      // defined on Google Research Blog.
 //	c.Add(myMember)
 //
 //	key := []byte("my-key")
+//      // LocateKey hashes the key and calculates partition ID with
+//      // this modulo operation: MOD(hash result, partition count)
+//      // The owner of the partition is already calculated by New/Add/Remove.
+//      // LocateKey just returns the member which's responsible for the key.
 //	member := c.LocateKey(key)
 //
 package consistent
@@ -73,10 +84,20 @@ type Member interface {
 
 // Config represents a structure to control consistent package.
 type Config struct {
-	Hasher            Hasher
-	PartitionCount    int
+	// Hasher is responsible for generating unsigned, 64 bit hash of provided byte slice.
+	Hasher Hasher
+
+	// Keys are distributed among partitions. Prime numbers are good to
+	// distribute keys uniformly. Select a big PartitionCount if you have
+	// to many keys.
+	PartitionCount int
+
+	// Members are replicated on consistent hash ring. This number means that a member
+	// how many times replicated on the ring.
 	ReplicationFactor int
-	Load              float64
+
+	// Load is used to calculate average load. See the code, the paper and Google's blog post to learn about it.
+	Load float64
 }
 
 // Consistent holds the information about the members of the consistent hash circle.
