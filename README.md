@@ -88,7 +88,7 @@ The second most probably used function is `GetClosestN`.
 // With a properly configured and initialized consistent instance
 
 key := []byte("my-key")
-members := c.GetClosestN(key, 2)
+members, err := c.GetClosestN(key, 2)
 ```
 
 This may be useful to find backup nodes to store your key.
