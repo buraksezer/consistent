@@ -107,7 +107,7 @@ Examples
 --------
 
 The most basic use of consistent package should be like this. For detailed list of functions, [visit godoc.org.](https://godoc.org/github.com/buraksezer/consistent)
-More sample code can be found under [_example](https://github.com/buraksezer/consistent/tree/master/_examples).
+More sample code can be found under [_examples](https://github.com/buraksezer/consistent/tree/master/_examples).
 
 ```go
 package main
@@ -165,7 +165,7 @@ func main() {
 }
 ```
 
-Another useful example is `relocation_percentage.go`. It creates a `consistent` object with 8 members and distributes partitions among them. Then adds 9th member, 
+Another useful example is `_examples/relocation_percentage.go`. It creates a `consistent` object with 8 members and distributes partitions among them. Then adds 9th member, 
 here is the result with a proper configuration and hash function:
 
 ```
@@ -195,7 +195,7 @@ partID: 105 moved to node9.olricmq from node2.olricmq
 Moved partition count is highly depends on your configuration and quailty of hash function. You should modify the configuration to find an optimum set of configuration
 for your system.
 
-`load_distribution.go` is also useful to understand load distribution. It creates a `consistent` object with 8 members and locates 1M key. It also calculates average 
+`_examples/load_distribution.go` is also useful to understand load distribution. It creates a `consistent` object with 8 members and locates 1M key. It also calculates average 
 load which cannot be exceeded by any member. Here is the result:
 
 ```
