@@ -92,6 +92,16 @@ members := c.GetClosestN(key, 2)
 
 This may be useful to find backup nodes to store your key.
 
+Benchmarks
+----------
+On an early 2015 Macbook:
+
+```
+BenchmarkAddRemove-4     	  100000	     22006 ns/op
+BenchmarkLocateKey-4     	 5000000	       252 ns/op
+BenchmarkGetClosestN-4   	  500000	      2974 ns/op
+```
+
 Sample
 ------
 
