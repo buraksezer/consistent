@@ -65,14 +65,15 @@ type Config struct {
 
 	// Keys are distributed among partitions. Prime numbers are good to
 	// distribute keys uniformly. Select a big PartitionCount if you have
-	// to many keys.
+	// too many keys.
 	PartitionCount int
 
 	// Members are replicated on consistent hash ring. This number means that a member
 	// how many times replicated on the ring.
 	ReplicationFactor int
 
-	// Load is used to calculate average load. See the code, the paper and Google's blog post to learn about it.
+	// Load is used to calculate average load. See the code, the paper and Google's 
+        // blog post to learn about it.
 	Load float64
 }
 ```

@@ -89,7 +89,7 @@ type Config struct {
 
 	// Keys are distributed among partitions. Prime numbers are good to
 	// distribute keys uniformly. Select a big PartitionCount if you have
-	// to many keys.
+	// too many keys.
 	PartitionCount int
 
 	// Members are replicated on consistent hash ring. This number means that a member
