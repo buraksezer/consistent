@@ -19,7 +19,8 @@ Table of Content
 - [Install](#install)
 - [Configuration](#configuration)
 - [Usage](#usage)
-- [Sample](#sample)
+- [Benchmarks](#benchmarks)
+- [Examples](#examples)
 
 Overview
 --------
@@ -102,8 +103,8 @@ BenchmarkLocateKey-4     	 5000000	       252 ns/op
 BenchmarkGetClosestN-4   	  500000	      2974 ns/op
 ```
 
-Sample
-------
+Examples
+--------
 
 The most basic use of consistent package should be like this. For detailed list of functions, [visit godoc.org.](https://godoc.org/github.com/buraksezer/consistent)
 More sample code can be found under [_example](https://github.com/buraksezer/consistent/tree/master/_examples).
