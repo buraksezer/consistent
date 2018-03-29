@@ -128,7 +128,7 @@ func (c *Consistent) GetMembers() []Member {
 	return members
 }
 
-// AverateLoad exposes the current average load.
+// AverageLoad exposes the current average load.
 func (c *Consistent) AverageLoad() float64 {
 	avgLoad := float64(c.partitionCount/uint64(len(c.members))) * c.config.Load
 	return math.Ceil(avgLoad)
