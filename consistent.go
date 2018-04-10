@@ -299,16 +299,16 @@ func (c *Consistent) LocateKey(key []byte) Member {
 	return c.GetPartitionOwner(partID)
 }
 
-// GetClosestN returns the closest N member to a key in the hash ring. This may be useful to find members for replication.
-func (c *Consistent) GetClosestN(key []byte, count int) ([]Member, error) {
+func (c *Consistent) getClosestN(partID, count int) ([]Member, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
 	res := []Member{}
 	if count > len(c.members)-1 {
 		return res, ErrInsufficientMemberCount
 	}
 
 	var ownerKey uint64
-
-	partID := c.FindPartitionID(key)
 	owner := c.GetPartitionOwner(partID)
 	// Hash and sort all the names.
 	keys := []uint64{}
@@ -344,4 +344,15 @@ func (c *Consistent) GetClosestN(key []byte, count int) ([]Member, error) {
 		res = append(res, *kmems[key])
 	}
 	return res, nil
+}
+
+// GetClosestN returns the closest N member to a key in the hash ring. This may be useful to find members for replication.
+func (c *Consistent) GetClosestN(key []byte, count int) ([]Member, error) {
+	partID := c.FindPartitionID(key)
+	return c.getClosestN(partID, count)
+}
+
+// GetClosestNForPartition returns the closest N member for given partition. This may be useful to find members for replication.
+func (c *Consistent) GetClosestNForPartition(partID, count int) ([]Member, error) {
+	return c.getClosestN(partID, count)
 }
