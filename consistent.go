@@ -232,6 +232,7 @@ func (c *Consistent) delSlice(val uint64) {
 	for i := 0; i < len(c.sortedSet); i++ {
 		if c.sortedSet[i] == val {
 			c.sortedSet = append(c.sortedSet[:i], c.sortedSet[i+1:]...)
+			break
 		}
 	}
 }
