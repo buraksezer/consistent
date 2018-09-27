@@ -39,7 +39,7 @@
 //	c := consistent.New(members, cfg)
 //
 //      // myMember struct just needs to implement a String method.
-//      // New/Add/Remove distributes partitions among membes using the algorithm
+//      // New/Add/Remove distributes partitions among members using the algorithm
 //      // defined on Google Research Blog.
 //	c.Add(myMember)
 //
