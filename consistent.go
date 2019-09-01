@@ -142,7 +142,7 @@ func (c *Consistent) GetMembers() []Member {
 	defer c.mu.RUnlock()
 
 	// Create a thread-safe copy of member list.
-	members := []Member{}
+	members := make([]Member, 0, len(c.members))
 	for _, member := range c.members {
 		members = append(members, *member)
 	}
@@ -221,7 +221,7 @@ func (c *Consistent) Add(member Member) {
 	defer c.mu.Unlock()
 
 	if _, ok := c.members[member.String()]; ok {
-		// We have already have this. Quit immediately.
+		// We already have this member. Quit immediately.
 		return
 	}
 	c.add(member)
