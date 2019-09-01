@@ -165,8 +165,7 @@ func (c *Consistent) distributeWithLoad(partID, idx int, partitions map[int]*Mem
 			panic("not enough room to distribute partitions")
 		}
 		i := c.sortedSet[idx]
-		tmp := c.ring[i]
-		member := *tmp
+		member := *c.ring[i]
 		load := loads[member.String()]
 		if load+1 <= avgLoad {
 			partitions[partID] = &member
