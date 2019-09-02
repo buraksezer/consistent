@@ -28,11 +28,11 @@ In this package's context, the keys are distributed among partitions and partiti
 
 When you create a new consistent instance or call `Add/Remove`:
 
-* The member's name is hashed and inserted it into the hash ring,
+* The member's name is hashed and inserted into the hash ring,
 * Average load is calculated by the algorithm defined in the paper,
-* Partitions are distributed among members by hashing partition IDs and any of them don't exceed the average load.
+* Partitions are distributed among members by hashing partition IDs and none of them exceed the average load.
 
-Average load cannot be exceeded. So if all the members are loaded at the maximum while trying to add a new member, it panics.
+Average load cannot be exceeded. So if all members are loaded at the maximum while trying to add a new member, it panics.
 
 When you want to locate a key by calling `LocateKey`:
 
@@ -69,12 +69,12 @@ type Config struct {
 	// too many keys.
 	PartitionCount int
 
-	// Members are replicated on consistent hash ring. This number means that a member
-	// how many times replicated on the ring.
+	// Members are replicated on consistent hash ring. This number controls
+	// the number each member is replicated on the ring.
 	ReplicationFactor int
 
 	// Load is used to calculate average load. See the code, the paper and Google's 
-        // blog post to learn about it.
+	// blog post to learn about it.
 	Load float64
 }
 ```
@@ -92,7 +92,7 @@ member := c.LocateKey(key)
 ```
 It returns a thread-safe copy of the member you added before.
 
-The second most probably used function is `GetClosestN`. 
+The second most frequently used function is `GetClosestN`. 
 
 ```go
 // With a properly configured and initialized consistent instance
@@ -168,7 +168,7 @@ func main() {
 	key := []byte("my-key")
 	// calculates partition id for the given key
 	// partID := hash(key) % partitionCount
-	// the partitions is already distributed among members by Add function.
+	// the partitions are already distributed among members by Add function.
 	owner := c.LocateKey(key)
 	fmt.Println(owner.String())
 	// Prints node2.olricmq.com
@@ -202,7 +202,7 @@ partID: 105 moved to node9.olricmq from node2.olricmq
 6% of the partitions are relocated
 ```
 
-Moved partition count is highly depends on your configuration and quailty of hash function. You should modify the configuration to find an optimum set of configuration
+Moved partition count is highly dependent on your configuration and quailty of hash function. You should modify the configuration to find an optimum set of configurations
 for your system.
 
 `_examples/load_distribution.go` is also useful to understand load distribution. It creates a `consistent` object with 8 members and locates 1M key. It also calculates average 
