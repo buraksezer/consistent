@@ -159,10 +159,10 @@ func main() {
 
 	// Add some members to the consistent hash table.
 	// Add function calculates average load and distributes partitions over members
-	node1 := myMember("node1.olricmq.com")
+	node1 := myMember("node1.olric.com")
 	c.Add(node1)
 
-	node2 := myMember("node2.olricmq.com")
+	node2 := myMember("node2.olric.com")
 	c.Add(node2)
 
 	key := []byte("my-key")
@@ -171,7 +171,7 @@ func main() {
 	// the partitions are already distributed among members by Add function.
 	owner := c.LocateKey(key)
 	fmt.Println(owner.String())
-	// Prints node2.olricmq.com
+	// Prints node2.olric.com
 }
 ```
 
@@ -180,24 +180,24 @@ here is the result with a proper configuration and hash function:
 
 ```
 bloom:consistent burak$ go run _examples/relocation_percentage.go
-partID: 218 moved to node2.olricmq from node0.olricmq
-partID: 173 moved to node9.olricmq from node3.olricmq
-partID: 225 moved to node7.olricmq from node0.olricmq
-partID:  85 moved to node9.olricmq from node7.olricmq
-partID: 220 moved to node5.olricmq from node0.olricmq
-partID:  33 moved to node9.olricmq from node5.olricmq
-partID: 254 moved to node9.olricmq from node4.olricmq
-partID:  71 moved to node9.olricmq from node3.olricmq
-partID: 236 moved to node9.olricmq from node2.olricmq
-partID: 118 moved to node9.olricmq from node3.olricmq
-partID: 233 moved to node3.olricmq from node0.olricmq
-partID:  50 moved to node9.olricmq from node4.olricmq
-partID: 252 moved to node9.olricmq from node2.olricmq
-partID: 121 moved to node9.olricmq from node2.olricmq
-partID: 259 moved to node9.olricmq from node4.olricmq
-partID:  92 moved to node9.olricmq from node7.olricmq
-partID: 152 moved to node9.olricmq from node3.olricmq
-partID: 105 moved to node9.olricmq from node2.olricmq
+partID: 218 moved to node2.olric from node0.olric
+partID: 173 moved to node9.olric from node3.olric
+partID: 225 moved to node7.olric from node0.olric
+partID:  85 moved to node9.olric from node7.olric
+partID: 220 moved to node5.olric from node0.olric
+partID:  33 moved to node9.olric from node5.olric
+partID: 254 moved to node9.olric from node4.olric
+partID:  71 moved to node9.olric from node3.olric
+partID: 236 moved to node9.olric from node2.olric
+partID: 118 moved to node9.olric from node3.olric
+partID: 233 moved to node3.olric from node0.olric
+partID:  50 moved to node9.olric from node4.olric
+partID: 252 moved to node9.olric from node2.olric
+partID: 121 moved to node9.olric from node2.olric
+partID: 259 moved to node9.olric from node4.olric
+partID:  92 moved to node9.olric from node7.olric
+partID: 152 moved to node9.olric from node3.olric
+partID: 105 moved to node9.olric from node2.olric
 
 6% of the partitions are relocated
 ```
@@ -210,14 +210,14 @@ load which cannot be exceeded by any member. Here is the result:
 
 ```
 Maximum key count for a member should be around this:  147602
-member: node2.olricmq, key count: 100362
-member: node5.olricmq, key count: 99448
-member: node0.olricmq, key count: 147735
-member: node3.olricmq, key count: 103455
-member: node6.olricmq, key count: 147069
-member: node1.olricmq, key count: 121566
-member: node4.olricmq, key count: 147932
-member: node7.olricmq, key count: 132433
+member: node2.olric, key count: 100362
+member: node5.olric, key count: 99448
+member: node0.olric, key count: 147735
+member: node3.olric, key count: 103455
+member: node6.olric, key count: 147069
+member: node1.olric, key count: 121566
+member: node4.olric, key count: 147932
+member: node7.olric, key count: 132433
 ```
 
 Average load can be calculated by using the following formula:

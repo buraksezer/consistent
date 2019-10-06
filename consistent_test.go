@@ -58,7 +58,7 @@ func TestConsistentAdd(t *testing.T) {
 	c := New(nil, cfg)
 	members := make(map[string]struct{})
 	for i := 0; i < 8; i++ {
-		member := testMember(fmt.Sprintf("node%d.olricmq", i))
+		member := testMember(fmt.Sprintf("node%d.olric", i))
 		members[member.String()] = struct{}{}
 		c.Add(member)
 	}
@@ -78,7 +78,7 @@ func TestConsistentAdd(t *testing.T) {
 func TestConsistentRemove(t *testing.T) {
 	members := []Member{}
 	for i := 0; i < 8; i++ {
-		member := testMember(fmt.Sprintf("node%d.olricmq", i))
+		member := testMember(fmt.Sprintf("node%d.olric", i))
 		members = append(members, member)
 	}
 	cfg := newConfig()
@@ -97,7 +97,7 @@ func TestConsistentRemove(t *testing.T) {
 func TestConsistentLoad(t *testing.T) {
 	members := []Member{}
 	for i := 0; i < 8; i++ {
-		member := testMember(fmt.Sprintf("node%d.olricmq", i))
+		member := testMember(fmt.Sprintf("node%d.olric", i))
 		members = append(members, member)
 	}
 	cfg := newConfig()
@@ -116,14 +116,14 @@ func TestConsistentLoad(t *testing.T) {
 func TestConsistentLocateKey(t *testing.T) {
 	cfg := newConfig()
 	c := New(nil, cfg)
-	key := []byte("OlricMQ")
+	key := []byte("Olric")
 	res := c.LocateKey(key)
 	if res != nil {
 		t.Fatalf("This should be nil: %v", res)
 	}
 	members := make(map[string]struct{})
 	for i := 0; i < 8; i++ {
-		member := testMember(fmt.Sprintf("node%d.olricmq", i))
+		member := testMember(fmt.Sprintf("node%d.olric", i))
 		members[member.String()] = struct{}{}
 		c.Add(member)
 	}
@@ -136,12 +136,12 @@ func TestConsistentLocateKey(t *testing.T) {
 func TestConsistentInsufficientMemberCount(t *testing.T) {
 	members := []Member{}
 	for i := 0; i < 8; i++ {
-		member := testMember(fmt.Sprintf("node%d.olricmq", i))
+		member := testMember(fmt.Sprintf("node%d.olric", i))
 		members = append(members, member)
 	}
 	cfg := newConfig()
 	c := New(members, cfg)
-	key := []byte("OlricMQ")
+	key := []byte("Olric")
 	_, err := c.GetClosestN(key, 30)
 	if err != ErrInsufficientMemberCount {
 		t.Fatalf("Expected ErrInsufficientMemberCount(%v), Got: %v", ErrInsufficientMemberCount, err)
@@ -151,12 +151,12 @@ func TestConsistentInsufficientMemberCount(t *testing.T) {
 func TestConsistentClosestMembers(t *testing.T) {
 	members := []Member{}
 	for i := 0; i < 8; i++ {
-		member := testMember(fmt.Sprintf("node%d.olricmq", i))
+		member := testMember(fmt.Sprintf("node%d.olric", i))
 		members = append(members, member)
 	}
 	cfg := newConfig()
 	c := New(members, cfg)
-	key := []byte("OlricMQ")
+	key := []byte("Olric")
 	closestn, err := c.GetClosestN(key, 2)
 	if err != nil {
 		t.Fatalf("Expected nil, Got: %v", err)
