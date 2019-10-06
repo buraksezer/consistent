@@ -144,7 +144,7 @@ func TestConsistentInsufficientMemberCount(t *testing.T) {
 	key := []byte("OlricMQ")
 	_, err := c.GetClosestN(key, 30)
 	if err != ErrInsufficientMemberCount {
-		t.Errorf("Expected ErrInsufficientMemberCount(%v), Got: %v", ErrInsufficientMemberCount, err)
+		t.Fatalf("Expected ErrInsufficientMemberCount(%v), Got: %v", ErrInsufficientMemberCount, err)
 	}
 }
 
@@ -159,15 +159,15 @@ func TestConsistentClosestMembers(t *testing.T) {
 	key := []byte("OlricMQ")
 	closestn, err := c.GetClosestN(key, 2)
 	if err != nil {
-		t.Errorf("Expected nil, Got: %v", err)
+		t.Fatalf("Expected nil, Got: %v", err)
 	}
 	if len(closestn) != 2 {
-		t.Errorf("Expected closest member count is 2. Got: %d", len(closestn))
+		t.Fatalf("Expected closest member count is 2. Got: %d", len(closestn))
 	}
 	partID := c.FindPartitionID(key)
 	owner := c.GetPartitionOwner(partID)
-	for _, cl := range closestn {
-		if cl.String() == owner.String() {
+	for i, cl := range closestn {
+		if i != 0 && cl.String() == owner.String() {
 			t.Fatalf("Backup is equal the partition owner: %s", owner.String())
 		}
 	}

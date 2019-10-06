@@ -325,16 +325,18 @@ func (c *Consistent) getClosestN(partID, count int) ([]Member, error) {
 		return keys[i] < keys[j]
 	})
 
-	// Find the member
+	// Find the key owner
 	idx := 0
 	for idx < len(keys) {
 		if keys[idx] == ownerKey {
+			key := keys[idx]
+			res = append(res, *kmems[key])
 			break
 		}
 		idx++
 	}
 
-	// Find the closest members.
+	// Find the closest(replica owners) members.
 	for len(res) < count {
 		idx++
 		if idx >= len(keys) {
@@ -346,13 +348,15 @@ func (c *Consistent) getClosestN(partID, count int) ([]Member, error) {
 	return res, nil
 }
 
-// GetClosestN returns the closest N member to a key in the hash ring. This may be useful to find members for replication.
+// GetClosestN returns the closest N member to a key in the hash ring.
+// This may be useful to find members for replication.
 func (c *Consistent) GetClosestN(key []byte, count int) ([]Member, error) {
 	partID := c.FindPartitionID(key)
 	return c.getClosestN(partID, count)
 }
 
-// GetClosestNForPartition returns the closest N member for given partition. This may be useful to find members for replication.
+// GetClosestNForPartition returns the closest N member for given partition.
+// This may be useful to find members for replication.
 func (c *Consistent) GetClosestNForPartition(partID, count int) ([]Member, error) {
 	return c.getClosestN(partID, count)
 }
