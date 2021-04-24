@@ -15,6 +15,7 @@ Table of Content
 ----------------
 
 - [Overview](#overview)
+- [Notable Users](#notable-users)
 - [Install](#install)
 - [Configuration](#configuration)
 - [Usage](#usage)
@@ -44,6 +45,18 @@ When you want to locate a key by calling `LocateKey`:
 No memory is allocated by `consistent` except hashing when you want to locate a key.
 
 Note that the number of partitions cannot be changed after creation. 
+
+Notable Users
+-------------
+
+[buraksezer/consistent](https://github.com/buraksezer/consistent) is used at production by the following projects:
+
+* [buraksezer/olric](https://github.com/buraksezer/olric): Embeddable, distributed data structures in Go.
+* [chrislusf/seaweedfs](https://github.com/chrislusf/seaweedfs): SeaweedFS is a distributed storage system for blobs, objects, files, and data warehouse, to store and serve billions of files fast!.
+* [celo-org/celo-blockchain](https://github.com/celo-org/celo-blockchain): Global payments infrastructure built for mobile.
+* [mason-leap-lab/infinicache](https://github.com/mason-leap-lab/infinicache): InfiniCache: A cost-effective memory cache that is built atop ephemeral serverless functions.
+* [opencord/voltha-lib-go](https://github.com/opencord/voltha-lib-go): Voltha common library code.
+* [Poorunga/edgemesh](https://github.com/Poorunga/edgemesh): EdgeMesh is a type of service mesh, which is closely related to KubeEdge, and is applicable to the edge scenarios.
 
 Install
 -------
