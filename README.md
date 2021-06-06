@@ -56,7 +56,9 @@ Notable Users
 * [celo-org/celo-blockchain](https://github.com/celo-org/celo-blockchain): Global payments infrastructure built for mobile.
 * [mason-leap-lab/infinicache](https://github.com/mason-leap-lab/infinicache): InfiniCache: A cost-effective memory cache that is built atop ephemeral serverless functions.
 * [opencord/voltha-lib-go](https://github.com/opencord/voltha-lib-go): Voltha common library code.
-* [Poorunga/edgemesh](https://github.com/Poorunga/edgemesh): EdgeMesh is a type of service mesh, which is closely related to KubeEdge, and is applicable to the edge scenarios.
+* [kubeedge/edgemesh](https://github.com/kubeedge/edgemesh): Simplified network and services for edge applications.
+* [authorizer-tech/access-controller](https://github.com/authorizer-tech/access-controller) An implementation of a distributed access-control server that is based on Google Zanzibar - "Google's Consistent, Global Authorization System".
+
 
 Install
 -------
