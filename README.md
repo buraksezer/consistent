@@ -55,6 +55,7 @@ Notable Users
 * [erda-project/erda](https://github.com/erda-project/erda): An enterprise-grade Cloud-Native application platform for Kubernetes.
 * [chrislusf/seaweedfs](https://github.com/chrislusf/seaweedfs): SeaweedFS is a distributed storage system for blobs, objects, files, and data warehouse, to store and serve billions of files fast!.
 * [celo-org/celo-blockchain](https://github.com/celo-org/celo-blockchain): Global payments infrastructure built for mobile.
+* [koderover/zadig](https://github.com/koderover/zadig): Zadig is a cloud native, distributed, developer-oriented continuous delivery product.
 * [mason-leap-lab/infinicache](https://github.com/mason-leap-lab/infinicache): InfiniCache: A cost-effective memory cache that is built atop ephemeral serverless functions.
 * [opencord/voltha-lib-go](https://github.com/opencord/voltha-lib-go): Voltha common library code.
 * [kubeedge/edgemesh](https://github.com/kubeedge/edgemesh): Simplified network and services for edge applications.
