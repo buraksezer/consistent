@@ -173,6 +173,15 @@ func TestConsistentClosestMembers(t *testing.T) {
 	}
 }
 
+func TestConsistent_ZeroAverageLoad(t *testing.T) {
+	cfg := newConfig()
+	c := New(nil, cfg)
+	load := c.AverageLoad()
+	if load != 0 {
+		t.Fatalf("Expected average load to be 0. Got: %v", load)
+	}
+}
+
 func BenchmarkAddRemove(b *testing.B) {
 	cfg := newConfig()
 	c := New(nil, cfg)

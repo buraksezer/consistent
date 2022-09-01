@@ -151,6 +151,10 @@ func (c *Consistent) GetMembers() []Member {
 
 // AverageLoad exposes the current average load.
 func (c *Consistent) AverageLoad() float64 {
+	if len(c.members) == 0 {
+		return 0
+	}
+
 	avgLoad := float64(c.partitionCount/uint64(len(c.members))) * c.config.Load
 	return math.Ceil(avgLoad)
 }
@@ -303,16 +307,15 @@ func (c *Consistent) getClosestN(partID, count int) ([]Member, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	res := []Member{}
 	if count > len(c.members) {
-		return res, ErrInsufficientMemberCount
+		return []Member{}, ErrInsufficientMemberCount
 	}
 
 	var ownerKey uint64
 	owner := c.GetPartitionOwner(partID)
 	// Hash and sort all the names.
-	keys := []uint64{}
-	kmems := make(map[uint64]*Member)
+	keys := make([]uint64, 0, len(c.members))
+	kmems := make(map[uint64]*Member, len(c.members))
 	for name, member := range c.members {
 		key := c.hasher.Sum64([]byte(name))
 		if name == owner.String() {
@@ -325,6 +328,7 @@ func (c *Consistent) getClosestN(partID, count int) ([]Member, error) {
 		return keys[i] < keys[j]
 	})
 
+	res := make([]Member, 0, count)
 	// Find the key owner
 	idx := 0
 	for idx < len(keys) {
