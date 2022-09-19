@@ -52,6 +52,7 @@ Notable Users
 [buraksezer/consistent](https://github.com/buraksezer/consistent) is used at production by the following projects:
 
 * [buraksezer/olric](https://github.com/buraksezer/olric): Embeddable, distributed data structures in Go.
+* [open-telemetry/opentelemetry-operator](https://github.com/open-telemetry/opentelemetry-operator): Kubernetes Operator for OpenTelemetry Collector
 * [erda-project/erda](https://github.com/erda-project/erda): An enterprise-grade Cloud-Native application platform for Kubernetes.
 * [chrislusf/seaweedfs](https://github.com/chrislusf/seaweedfs): SeaweedFS is a distributed storage system for blobs, objects, files, and data warehouse, to store and serve billions of files fast!.
 * [celo-org/celo-blockchain](https://github.com/celo-org/celo-blockchain): Global payments infrastructure built for mobile.
