@@ -136,7 +136,7 @@ func New(members []Member, config Config) *Consistent {
 	return c
 }
 
-// GetMembers returns a thread-safe copy of members.
+// GetMembers returns a thread-safe copy of members. If there are no members, it returns an empty slice of Member.
 func (c *Consistent) GetMembers() []Member {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -151,12 +151,23 @@ func (c *Consistent) GetMembers() []Member {
 
 // AverageLoad exposes the current average load.
 func (c *Consistent) AverageLoad() float64 {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return c.averageLoad()
+}
+
+func (c *Consistent) averageLoad() float64 {
+	if len(c.members) == 0 {
+		return 0
+	}
+
 	avgLoad := float64(c.partitionCount/uint64(len(c.members))) * c.config.Load
 	return math.Ceil(avgLoad)
 }
 
 func (c *Consistent) distributeWithLoad(partID, idx int, partitions map[int]*Member, loads map[string]float64) {
-	avgLoad := c.AverageLoad()
+	avgLoad := c.averageLoad()
 	var count int
 	for {
 		count++
