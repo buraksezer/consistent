@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2021 Burak Sezer
+// Copyright (c) 2018-2022 Burak Sezer
 // All rights reserved.
 //
 // This code is licensed under the MIT License.
@@ -76,7 +76,7 @@ func TestConsistentAdd(t *testing.T) {
 }
 
 func TestConsistentRemove(t *testing.T) {
-	members := []Member{}
+	var members []Member
 	for i := 0; i < 8; i++ {
 		member := testMember(fmt.Sprintf("node%d.olric", i))
 		members = append(members, member)
@@ -144,7 +144,7 @@ func TestConsistentLocateKey(t *testing.T) {
 }
 
 func TestConsistentInsufficientMemberCount(t *testing.T) {
-	members := []Member{}
+	var members []Member
 	for i := 0; i < 8; i++ {
 		member := testMember(fmt.Sprintf("node%d.olric", i))
 		members = append(members, member)
@@ -159,7 +159,7 @@ func TestConsistentInsufficientMemberCount(t *testing.T) {
 }
 
 func TestConsistentClosestMembers(t *testing.T) {
-	members := []Member{}
+	var members []Member
 	for i := 0; i < 8; i++ {
 		member := testMember(fmt.Sprintf("node%d.olric", i))
 		members = append(members, member)
@@ -215,6 +215,6 @@ func BenchmarkGetClosestN(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		key := []byte("key" + strconv.Itoa(i))
-		c.GetClosestN(key, 3)
+		_, _ = c.GetClosestN(key, 3)
 	}
 }

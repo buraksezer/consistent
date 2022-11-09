@@ -21,9 +21,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Package consistent provides a consistent hashing function with bounded loads.
-// For more information about the underlying algorithm, please take a look at
-// https://research.googleblog.com/2017/04/consistent-hashing-with-bounded-loads.html
+// Package consistent provides a consistent hashing function with bounded loads. This implementation also adds
+// partitioning logic on top of the original algorithm. For more information about the underlying algorithm,
+// please take a look at https://research.googleblog.com/2017/04/consistent-hashing-with-bounded-loads.html
 //
 // Example Use:
 //
@@ -65,15 +65,16 @@ import (
 	"sync"
 )
 
-var (
-	// ErrInsufficientMemberCount represents an error which means there are not enough members to complete the task.
-	ErrInsufficientMemberCount = errors.New("insufficient member count")
-
-	// ErrMemberNotFound represents an error which means requested member could not be found in consistent hash ring.
-	ErrMemberNotFound = errors.New("member could not be found in ring")
+const (
+	DefaultPartitionCount    int     = 271
+	DefaultReplicationFactor int     = 20
+	DefaultLoad              float64 = 1.25
 )
 
-// Hasher is responsible for generating unsigned, 64 bit hash of provided byte slice.
+// ErrInsufficientMemberCount represents an error which means there are not enough members to complete the task.
+var ErrInsufficientMemberCount = errors.New("insufficient member count")
+
+// Hasher is responsible for generating unsigned, 64-bit hash of provided byte slice.
 // Hasher should minimize collisions (generating same hash for different byte slice)
 // and while performance is also important fast functions are preferable (i.e.
 // you can use FarmHash family).
@@ -88,7 +89,7 @@ type Member interface {
 
 // Config represents a structure to control consistent package.
 type Config struct {
-	// Hasher is responsible for generating unsigned, 64 bit hash of provided byte slice.
+	// Hasher is responsible for generating unsigned, 64-bit hash of provided byte slice.
 	Hasher Hasher
 
 	// Keys are distributed among partitions. Prime numbers are good to
@@ -120,16 +121,26 @@ type Consistent struct {
 
 // New creates and returns a new Consistent object.
 func New(members []Member, config Config) *Consistent {
+	if config.Hasher == nil {
+		panic("Hasher cannot be nil")
+	}
+	if config.PartitionCount == 0 {
+		config.PartitionCount = DefaultPartitionCount
+	}
+	if config.ReplicationFactor == 0 {
+		config.ReplicationFactor = DefaultReplicationFactor
+	}
+	if config.Load == 0 {
+		config.Load = DefaultLoad
+	}
+
 	c := &Consistent{
 		config:         config,
 		members:        make(map[string]*Member),
 		partitionCount: uint64(config.PartitionCount),
 		ring:           make(map[uint64]*Member),
 	}
-	if config.Hasher == nil {
-		panic("Hasher cannot be nil")
-	}
-	// TODO: Check configuration here
+
 	c.hasher = config.Hasher
 	for _, member := range members {
 		c.add(member)
