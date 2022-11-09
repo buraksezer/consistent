@@ -62,7 +62,7 @@ import (
 )
 
 var (
-	//ErrInsufficientMemberCount represents an error which means there are not enough members to complete the task.
+	// ErrInsufficientMemberCount represents an error which means there are not enough members to complete the task.
 	ErrInsufficientMemberCount = errors.New("insufficient member count")
 
 	// ErrMemberNotFound represents an error which means requested member could not be found in consistent hash ring.
@@ -308,7 +308,7 @@ func (c *Consistent) getClosestN(partID, count int) ([]Member, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	res := []Member{}
+	var res []Member
 	if count > len(c.members) {
 		return res, ErrInsufficientMemberCount
 	}
@@ -316,7 +316,7 @@ func (c *Consistent) getClosestN(partID, count int) ([]Member, error) {
 	var ownerKey uint64
 	owner := c.getPartitionOwner(partID)
 	// Hash and sort all the names.
-	keys := []uint64{}
+	var keys []uint64
 	kmems := make(map[uint64]*Member)
 	for name, member := range c.members {
 		key := c.hasher.Sum64([]byte(name))
