@@ -95,22 +95,32 @@ func TestConsistentRemove(t *testing.T) {
 }
 
 func TestConsistentLoad(t *testing.T) {
-	members := []Member{}
+	var members []Member
 	for i := 0; i < 8; i++ {
 		member := testMember(fmt.Sprintf("node%d.olric", i))
 		members = append(members, member)
 	}
 	cfg := newConfig()
-	c := New(members, cfg)
-	if len(c.GetMembers()) != len(members) {
-		t.Fatalf("inserted member count is different")
-	}
-	maxLoad := c.AverageLoad()
-	for member, load := range c.LoadDistribution() {
-		if load > maxLoad {
-			t.Fatalf("%s exceeds max load. Its load: %f, max load: %f", member, load, maxLoad)
+
+	t.Run("Average load should be greater than the member's load", func(t *testing.T) {
+		c := New(members, cfg)
+		if len(c.GetMembers()) != len(members) {
+			t.Fatalf("inserted member count is different")
 		}
-	}
+		maxLoad := c.AverageLoad()
+		for member, load := range c.LoadDistribution() {
+			if load > maxLoad {
+				t.Fatalf("%s exceeds max load. Its load: %f, max load: %f", member, load, maxLoad)
+			}
+		}
+	})
+
+	t.Run("Average load should equal to zero if there are no members", func(t *testing.T) {
+		c := New(nil, cfg)
+		if c.AverageLoad() != 0 {
+			t.Fatalf("AverageLoad should equal to zero")
+		}
+	})
 }
 
 func TestConsistentLocateKey(t *testing.T) {
