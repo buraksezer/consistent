@@ -93,12 +93,13 @@ type Config struct {
 	Hasher Hasher
 
 	// Keys are distributed among partitions. Prime numbers are good to
-	// distribute keys uniformly. Select a big PartitionCount if you have
-	// too many keys.
+	// distribute keys uniformly. Select a large PartitionCount if you have
+	// a lot of keys.
 	PartitionCount int
 
-	// Members are replicated on consistent hash ring. This number means that a member
-	// how many times replicated on the ring.
+	// ReplicationFactor gives how many times Members are replicated on the consistent hash ring.
+	// if value is set to 0, it falls back to default value of 20.
+	// a value of 1 means that no replication occurs and that every member is only present once on the hash ring.
 	ReplicationFactor int
 
 	// Load is used to calculate average load. See the code, the paper and Google's blog post to learn about it.
@@ -226,7 +227,7 @@ func (c *Consistent) distributePartitions() {
 }
 
 func (c *Consistent) add(member Member) {
-	for i := 0; i < c.config.ReplicationFactor; i++ {
+	for i := 0; i <= c.config.ReplicationFactor; i++ {
 		key := []byte(fmt.Sprintf("%s%d", member.String(), i))
 		h := c.hasher.Sum64(key)
 		c.ring[h] = &member
