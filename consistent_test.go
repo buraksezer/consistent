@@ -123,6 +123,84 @@ func TestConsistentLoad(t *testing.T) {
 	})
 }
 
+// Regression test for https://github.com/buraksezer/consistent/issues/13
+//
+// distributeWithLoad increased the counter before it checked a position on the
+// ring. So the last position was never checked. A ring with one position always
+// panicked, even if the member was empty.
+func TestConsistentDistributeWithLoadCoversWholeRing(t *testing.T) {
+	newMembers := func(count int) []Member {
+		var members []Member
+		for i := 0; i < count; i++ {
+			members = append(members, testMember(fmt.Sprintf("node%d.olric", i)))
+		}
+		return members
+	}
+
+	cases := []struct {
+		name        string
+		memberCount int
+		config      Config
+	}{
+		{
+			name:        "single member on a single ring position",
+			memberCount: 1,
+			config:      Config{PartitionCount: 100, ReplicationFactor: 1, Load: 1.25, Hasher: hasher{}},
+		},
+		{
+			name:        "one partition on one member",
+			memberCount: 1,
+			config:      Config{PartitionCount: 1, ReplicationFactor: 1, Load: 1, Hasher: hasher{}},
+		},
+		{
+			name:        "few partitions over few members without replicas",
+			memberCount: 2,
+			config:      Config{PartitionCount: 10, ReplicationFactor: 1, Load: 1.1, Hasher: hasher{}},
+		},
+		{
+			name:        "default configuration",
+			memberCount: 8,
+			config:      Config{PartitionCount: 271, ReplicationFactor: 20, Load: 1.25, Hasher: hasher{}},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if err := recover(); err != nil {
+					t.Fatalf("Expected no panic, Got: %v", err)
+				}
+			}()
+
+			c := New(newMembers(tc.memberCount), tc.config)
+			// Every partition must have an owner.
+			for partID := 0; partID < tc.config.PartitionCount; partID++ {
+				if c.GetPartitionOwner(partID) == nil {
+					t.Fatalf("partition %d has no owner", partID)
+				}
+			}
+		})
+	}
+}
+
+// The panic must still work after the fix above. If there is no room for all
+// partitions, distributeWithLoad has to panic, not loop forever.
+func TestConsistentDistributeWithLoadExhausted(t *testing.T) {
+	defer func() {
+		if err := recover(); err == nil {
+			t.Fatal("Expected a panic, Got: nil")
+		}
+	}()
+
+	var members []Member
+	for i := 0; i < 2; i++ {
+		members = append(members, testMember(fmt.Sprintf("node%d.olric", i)))
+	}
+	// Average load is Ceil(10/2 * 0.5) = 3. Two members can take 6 partitions,
+	// but we have 10 of them.
+	New(members, Config{PartitionCount: 10, ReplicationFactor: 1, Load: 0.5, Hasher: hasher{}})
+}
+
 func TestConsistentLocateKey(t *testing.T) {
 	cfg := newConfig()
 	c := New(nil, cfg)
