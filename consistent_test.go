@@ -24,6 +24,7 @@
 package consistent
 
 import (
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"strconv"
@@ -382,6 +383,84 @@ func TestConsistentClosestMembers(t *testing.T) {
 	for i, cl := range closestn {
 		if i != 0 && cl.String() == owner.String() {
 			t.Fatalf("Backup is equal the partition owner: %s", owner.String())
+		}
+	}
+}
+
+func TestConsistentNewWithEmptyMemberList(t *testing.T) {
+	cases := []struct {
+		name    string
+		members []Member
+	}{
+		{name: "nil list", members: nil},
+		{name: "empty list", members: []Member{}},
+		{name: "empty list with capacity", members: make([]Member, 0, 4)},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if err := recover(); err != nil {
+					t.Fatalf("Expected no panic, Got: %v", err)
+				}
+			}()
+
+			c := New(tc.members, newConfig())
+			if len(c.GetMembers()) != 0 {
+				t.Fatalf("Expected 0 members, Got: %d", len(c.GetMembers()))
+			}
+			if c.LocateKey([]byte("Olric")) != nil {
+				t.Fatal("Expected no owner on an empty ring")
+			}
+
+			// The ring must still work after the first member arrives.
+			c.Add(testMember("node0.olric"))
+			if owner := c.LocateKey([]byte("Olric")); owner == nil {
+				t.Fatal("Expected an owner after Add")
+			}
+		})
+	}
+}
+
+func TestConsistentGetClosestNForPartitionOutOfRange(t *testing.T) {
+	var members []Member
+	for i := 0; i < 8; i++ {
+		members = append(members, testMember(fmt.Sprintf("node%d.olric", i)))
+	}
+	cfg := newConfig()
+	c := New(members, cfg)
+
+	// The last valid id is PartitionCount - 1.
+	badIDs := []int{-1, cfg.PartitionCount, cfg.PartitionCount + 1, 9999}
+	for _, partID := range badIDs {
+		t.Run(fmt.Sprintf("partition %d", partID), func(t *testing.T) {
+			defer func() {
+				if err := recover(); err != nil {
+					t.Fatalf("Expected no panic, Got: %v", err)
+				}
+			}()
+
+			// The count must not change the result.
+			for _, count := range []int{0, 1, 2} {
+				res, err := c.GetClosestNForPartition(partID, count)
+				if !errors.Is(err, ErrPartitionNotFound) {
+					t.Fatalf("Expected ErrPartitionNotFound(%v), Got: %v", ErrPartitionNotFound, err)
+				}
+				if len(res) != 0 {
+					t.Fatalf("Expected an empty result, Got: %d members", len(res))
+				}
+			}
+		})
+	}
+
+	// A valid id must still work.
+	for partID := 0; partID < cfg.PartitionCount; partID++ {
+		res, err := c.GetClosestNForPartition(partID, 2)
+		if err != nil {
+			t.Fatalf("Expected nil, Got: %v", err)
+		}
+		if len(res) != 2 {
+			t.Fatalf("Expected 2 members for partition %d, Got: %d", partID, len(res))
 		}
 	}
 }

@@ -74,6 +74,9 @@ const (
 // ErrInsufficientMemberCount represents an error which means there are not enough members to complete the task.
 var ErrInsufficientMemberCount = errors.New("insufficient member count")
 
+// ErrPartitionNotFound represents an error which means the given partition id is out of range.
+var ErrPartitionNotFound = errors.New("partition not found")
+
 // Hasher is responsible for generating unsigned, 64-bit hash of provided byte slice.
 // Hasher should minimize collisions (generating same hash for different byte slice)
 // and while performance is also important fast functions are preferable (i.e.
@@ -145,7 +148,7 @@ func New(members []Member, config Config) *Consistent {
 	for _, member := range members {
 		c.add(member)
 	}
-	if members != nil {
+	if len(members) != 0 {
 		c.distributePartitions()
 	}
 	return c
@@ -347,6 +350,11 @@ func (c *Consistent) getClosestN(partID, count int) ([]Member, error) {
 	if count > len(c.members) {
 		return res, ErrInsufficientMemberCount
 	}
+	// GetClosestNForPartition takes the partition id from the caller. An id out
+	// of range has no owner. The code below would call String on a nil owner.
+	if partID < 0 || partID >= int(c.partitionCount) {
+		return res, ErrPartitionNotFound
+	}
 
 	var ownerKey uint64
 	owner := c.getPartitionOwner(partID)
@@ -396,7 +404,8 @@ func (c *Consistent) GetClosestN(key []byte, count int) ([]Member, error) {
 }
 
 // GetClosestNForPartition returns the closest N member for given partition.
-// This may be useful to find members for replication.
+// This may be useful to find members for replication. It returns
+// ErrPartitionNotFound if partID is out of range.
 func (c *Consistent) GetClosestNForPartition(partID, count int) ([]Member, error) {
 	return c.getClosestN(partID, count)
 }
