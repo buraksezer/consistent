@@ -55,12 +55,17 @@ Notable Users
 
 [buraksezer/consistent](https://github.com/buraksezer/consistent) is used at production by the following projects:
 
-* [buraksezer/olric](https://github.com/buraksezer/olric): Embeddable, distributed data structures in Go.
+* [olric-data/olric](https://github.com/buraksezer/olric): Distributed, in-memory key/value store and cache.
+* [aws/amazon-cloudwatch-agent-operator](https://github.com/aws/amazon-cloudwatch-agent-operator): The Amazon CloudWatch Agent Operator is software developed to manage the CloudWatch Agent on Kubernetes.
+* [Azure/prometheus-collector](https://github.com/Azure/prometheus-collector): Azure Monitor managed service for Prometheus. 
 * [open-telemetry/opentelemetry-operator](https://github.com/open-telemetry/opentelemetry-operator): Kubernetes Operator for OpenTelemetry Collector.
+* [weibocom/motan-go](https://github.com/weibocom/motan-go/): A cross-language remote procedure call(RPC) framework for rapid development of high performance distributed services.
+* [vllm-project/aibrix](https://github.com/vllm-project/aibrix): Cost-efficient and pluggable Infrastructure components for GenAI inference.
+* [erda-project/erda](https://github.com/erda-project/erda): An enterprise-grade Cloud-Native application platform for Kubernetes.
 * [giantswarm/starboard-exporter](https://github.com/giantswarm/starboard-exporter): Exposes Prometheus metrics from [Starboard](https://github.com/aquasecurity/starboard)'s `VulnerabilityReport`, `ConfigAuditReport`, and other custom resources (CRs).
 * [megaease/easegress](https://github.com/megaease/easegress): A Cloud Native traffic orchestration system.
-* [chrislusf/seaweedfs](https://github.com/chrislusf/seaweedfs): SeaweedFS is a distributed storage system for blobs, objects, files, and data warehouse, to store and serve billions of files fast!.
-* [erda-project/erda](https://github.com/erda-project/erda): An enterprise-grade Cloud-Native application platform for Kubernetes.
+* [smartcontractkit/chainlink](https://github.com/smartcontractkit/chainlink): Oracle platform bringing the capital markets onchain and the market leader powering the majority of decentralized finance.
+* [rudderlabs/keydb](https://github.com/rudderlabs/keydb): KeyDB is a distributed key store (not a key-value store) designed to be fast, scalable, and eventually consistent.
 * [celo-org/celo-blockchain](https://github.com/celo-org/celo-blockchain): Global payments infrastructure built for mobile.
 * [koderover/zadig](https://github.com/koderover/zadig): Zadig is a cloud native, distributed, developer-oriented continuous delivery product.
 * [mason-leap-lab/infinicache](https://github.com/mason-leap-lab/infinicache): InfiniCache: A cost-effective memory cache that is built atop ephemeral serverless functions.
@@ -68,6 +73,7 @@ Notable Users
 * [kubeedge/edgemesh](https://github.com/kubeedge/edgemesh): Simplified network and services for edge applications.
 * [authorizer-tech/access-controller](https://github.com/authorizer-tech/access-controller) An implementation of a distributed access-control server that is based on Google Zanzibar - "Google's Consistent, Global Authorization System.
 * [Conflux-Chain/confura](https://github.com/Conflux-Chain/confura) Implementation of an Ethereum Infura equivalent public RPC service on Conflux Network.
+* [mapprotocol/atlas](https://github.com/mapprotocol/atlas): Atlas chain is a truly fast, permissionless, secure and scalable public blockchain platform.
 
 Install
 -------
@@ -140,7 +146,7 @@ BenchmarkGetClosestN-4   	  500000	      2974 ns/op
 Examples
 --------
 
-The most basic use of consistent package should be like this. For detailed list of functions, [visit godoc.org.](https://godoc.org/github.com/buraksezer/consistent)
+The most basic use of the consistent package should be like this. For a detailed list of functions, [visit pkg.go.dev.](https://pkg.go.dev/github.com/buraksezer/consistent)
 More sample code can be found under [_examples](https://github.com/buraksezer/consistent/tree/master/_examples).
 
 ```go
@@ -256,4 +262,4 @@ Please don't hesitate to fork the project and send a pull request or just e-mail
 
 License
 -------
-MIT License, - see LICENSE for more details.
+MIT License, – see LICENSE for more details.
