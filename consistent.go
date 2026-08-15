@@ -177,7 +177,7 @@ func (c *Consistent) averageLoad() float64 {
 		return 0
 	}
 
-	avgLoad := float64(c.partitionCount/uint64(len(c.members))) * c.config.Load
+	avgLoad := float64(c.partitionCount) / float64(len(c.members)) * c.config.Load
 	return math.Ceil(avgLoad)
 }
 
