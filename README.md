@@ -1,6 +1,10 @@
-consistent
-==========
-[![Go Reference](https://pkg.go.dev/badge/github.com/buraksezer/consistent.svg)](https://pkg.go.dev/github.com/buraksezer/consistent) ![Build Status](https://github.com/buraksezer/consistent/actions/workflows/tests.yml/badge.svg?branch=master) ![Linter](https://github.com/buraksezer/consistent/actions/workflows/lint.yml/badge.svg?branch=master) [![Coverage](http://gocover.io/_badge/github.com/buraksezer/consistent)](http://gocover.io/github.com/buraksezer/consistent) [![Go Report Card](https://goreportcard.com/badge/github.com/buraksezer/consistent)](https://goreportcard.com/report/github.com/buraksezer/consistent) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)  
+# Consistent
+
+[![Go Reference](https://pkg.go.dev/badge/github.com/buraksezer/consistent.svg)](https://pkg.go.dev/github.com/buraksezer/consistent)
+[![Build](https://github.com/buraksezer/consistent/actions/workflows/tests.yml/badge.svg)](https://github.com/buraksezer/consistent/actions/workflows/tests.yml) 
+[![Release](https://img.shields.io/github/v/release/buraksezer/consistent)](https://github.com/buraksezer/consistent/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
+[![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)  
 
 
 This library provides a consistent hashing function which simultaneously achieves both uniformity and consistency. 
