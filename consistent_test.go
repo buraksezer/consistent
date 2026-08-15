@@ -123,6 +123,65 @@ func TestConsistentLoad(t *testing.T) {
 	})
 }
 
+// Regression test for https://github.com/buraksezer/consistent/issues/16
+//
+// averageLoad divided two integers. This cut the fraction. The result was zero
+// when the partition count was smaller than the member count. Then
+// distributeWithLoad found no free space and panicked.
+// See https://github.com/buraksezer/consistent/pull/29
+func TestConsistentAverageLoadKeepsFraction(t *testing.T) {
+	cases := []struct {
+		partitionCount int
+		memberCount    int
+		load           float64
+		// oldAvgLoad is the result of the old code.
+		oldAvgLoad float64
+		avgLoad    float64
+	}{
+		{partitionCount: 3, memberCount: 8, load: 1.25, oldAvgLoad: 0, avgLoad: 1},
+		{partitionCount: 5, memberCount: 10, load: 1.25, oldAvgLoad: 0, avgLoad: 1},
+		{partitionCount: 9, memberCount: 10, load: 1.25, oldAvgLoad: 0, avgLoad: 2},
+		{partitionCount: 23, memberCount: 8, load: 1.25, oldAvgLoad: 3, avgLoad: 4},
+	}
+
+	for _, tc := range cases {
+		name := fmt.Sprintf("%d partitions on %d members", tc.partitionCount, tc.memberCount)
+		t.Run(name, func(t *testing.T) {
+			defer func() {
+				if err := recover(); err != nil {
+					t.Fatalf("Expected no panic, Got: %v", err)
+				}
+			}()
+
+			var members []Member
+			for i := 0; i < tc.memberCount; i++ {
+				members = append(members, testMember(fmt.Sprintf("node%d.olric", i)))
+			}
+			cfg := Config{
+				PartitionCount:    tc.partitionCount,
+				ReplicationFactor: 20,
+				Load:              tc.load,
+				Hasher:            hasher{},
+			}
+			c := New(members, cfg)
+
+			if got := c.AverageLoad(); got != tc.avgLoad {
+				t.Fatalf("Expected average load %f, Got: %f", tc.avgLoad, got)
+			}
+			if tc.avgLoad == tc.oldAvgLoad {
+				t.Fatalf("This case does not catch the bug. Both values are %f", tc.avgLoad)
+			}
+
+			// Every partition must have an owner.
+			for partID := 0; partID < tc.partitionCount; partID++ {
+				if c.GetPartitionOwner(partID) == nil {
+					t.Fatalf("partition %d has no owner", partID)
+				}
+			}
+		})
+	}
+}
+
 // Regression test for https://github.com/buraksezer/consistent/issues/13
 //
 // distributeWithLoad increased the counter before it checked a position on the
