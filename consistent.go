@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022 Burak Sezer
+// Copyright (c) 2018-2026 Burak Sezer
 // All rights reserved.
 //
 // This code is licensed under the MIT License.
