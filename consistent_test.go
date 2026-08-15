@@ -201,6 +201,71 @@ func TestConsistentDistributeWithLoadExhausted(t *testing.T) {
 	New(members, Config{PartitionCount: 10, ReplicationFactor: 1, Load: 0.5, Hasher: hasher{}})
 }
 
+// Regression test for https://github.com/buraksezer/consistent/issues/17
+//
+// The old code put the index after the member name. So "member" with index 10
+// and "member1" with index 0 gave the same key: "member10". Both members used
+// one position on the ring.
+func TestConsistentReplicaKeyCollision(t *testing.T) {
+	cfg := Config{
+		PartitionCount:    23,
+		ReplicationFactor: 11,
+		Load:              1.25,
+		Hasher:            hasher{},
+	}
+	members := []Member{testMember("member"), testMember("member1")}
+	c := New(members, cfg)
+
+	total := len(members) * cfg.ReplicationFactor
+	if len(c.ring) != total {
+		t.Fatalf("Expected %d positions on the ring, Got: %d", total, len(c.ring))
+	}
+	if len(c.sortedSet) != total {
+		t.Fatalf("Expected %d hashes in sortedSet, Got: %d", total, len(c.sortedSet))
+	}
+
+	// Every hash on the ring must be unique.
+	seen := make(map[uint64]struct{})
+	for _, h := range c.sortedSet {
+		if _, ok := seen[h]; ok {
+			t.Fatalf("Duplicate hash on the ring: %d", h)
+		}
+		seen[h] = struct{}{}
+	}
+
+	// Remove one member. The other member must keep all of its positions.
+	c.Remove("member1")
+	if len(c.ring) != cfg.ReplicationFactor {
+		t.Fatalf("Expected %d positions on the ring, Got: %d", cfg.ReplicationFactor, len(c.ring))
+	}
+	if len(c.sortedSet) != cfg.ReplicationFactor {
+		t.Fatalf("Expected %d hashes in sortedSet, Got: %d", cfg.ReplicationFactor, len(c.sortedSet))
+	}
+	for h, member := range c.ring {
+		if (*member).String() != "member" {
+			t.Fatalf("Position %d belongs to %s, expected member", h, (*member).String())
+		}
+	}
+}
+
+func TestConsistentReplicaKey(t *testing.T) {
+	// The key format is index, colon, member name.
+	cases := []struct {
+		name string
+		idx  int
+		key  string
+	}{
+		{name: "member", idx: 10, key: "10:member"},
+		{name: "member1", idx: 0, key: "0:member1"},
+		{name: "node0.olric", idx: 3, key: "3:node0.olric"},
+	}
+	for _, tc := range cases {
+		if got := string(replicaKey(tc.name, tc.idx)); got != tc.key {
+			t.Fatalf("Expected %s, Got: %s", tc.key, got)
+		}
+	}
+}
+
 func TestConsistentLocateKey(t *testing.T) {
 	cfg := newConfig()
 	c := New(nil, cfg)

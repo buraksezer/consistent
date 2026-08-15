@@ -227,9 +227,16 @@ func (c *Consistent) distributePartitions() {
 	c.loads = loads
 }
 
+// replicaKey builds the ring key of a virtual node. The index comes first,
+// then a colon, then the member name. This order keeps the two parts apart.
+// See https://github.com/buraksezer/consistent/issues/17
+func replicaKey(name string, idx int) []byte {
+	return []byte(fmt.Sprintf("%d:%s", idx, name))
+}
+
 func (c *Consistent) add(member Member) {
 	for i := 0; i < c.config.ReplicationFactor; i++ {
-		key := []byte(fmt.Sprintf("%s%d", member.String(), i))
+		key := replicaKey(member.String(), i)
 		h := c.hasher.Sum64(key)
 		c.ring[h] = &member
 		c.sortedSet = append(c.sortedSet, h)
@@ -275,7 +282,7 @@ func (c *Consistent) Remove(name string) {
 	}
 
 	for i := 0; i < c.config.ReplicationFactor; i++ {
-		key := []byte(fmt.Sprintf("%s%d", name, i))
+		key := replicaKey(name, i)
 		h := c.hasher.Sum64(key)
 		delete(c.ring, h)
 		c.delSlice(h)
