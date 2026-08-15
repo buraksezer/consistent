@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"strconv"
+	"sync"
 	"testing"
 )
 
@@ -382,6 +383,80 @@ func TestConsistentClosestMembers(t *testing.T) {
 		if i != 0 && cl.String() == owner.String() {
 			t.Fatalf("Backup is equal the partition owner: %s", owner.String())
 		}
+	}
+}
+
+// All public methods must be safe for concurrent use. Run this test with -race.
+func TestConsistentConcurrentAccess(t *testing.T) {
+	const (
+		writerCount = 4
+		readerCount = 8
+		iterations  = 150
+	)
+
+	// The seed member is never removed. So the ring is never empty.
+	c := New([]Member{testMember("seed.olric")}, newConfig())
+
+	var writers, readers sync.WaitGroup
+	stop := make(chan struct{})
+
+	for w := 0; w < writerCount; w++ {
+		writers.Add(1)
+		go func(w int) {
+			defer writers.Done()
+			for i := 0; i < iterations; i++ {
+				name := fmt.Sprintf("w%d-node%d.olric", w, i%5)
+				c.Add(testMember(name))
+
+				// Only this goroutine owns this name. It must be there now.
+				found := false
+				for _, member := range c.GetMembers() {
+					if member.String() == name {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("%s could not be found after Add", name)
+					return
+				}
+				c.Remove(name)
+			}
+		}(w)
+	}
+
+	for r := 0; r < readerCount; r++ {
+		readers.Add(1)
+		go func(r int) {
+			defer readers.Done()
+			key := []byte(fmt.Sprintf("key%d", r))
+			for {
+				select {
+				case <-stop:
+					return
+				default:
+				}
+				c.LocateKey(key)
+				c.GetMembers()
+				c.AverageLoad()
+				c.LoadDistribution()
+				c.GetPartitionOwner(c.FindPartitionID(key))
+				_, _ = c.GetClosestN(key, 1)
+			}
+		}(r)
+	}
+
+	writers.Wait()
+	close(stop)
+	readers.Wait()
+
+	// The writers removed all of their members. Only the seed is left.
+	members := c.GetMembers()
+	if len(members) != 1 {
+		t.Fatalf("Expected 1 member, Got: %d", len(members))
+	}
+	if members[0].String() != "seed.olric" {
+		t.Fatalf("Expected seed.olric, Got: %s", members[0].String())
 	}
 }
 
