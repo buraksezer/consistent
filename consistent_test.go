@@ -27,7 +27,6 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
-	"strconv"
 	"sync"
 	"testing"
 )
@@ -536,41 +535,5 @@ func TestConsistentConcurrentAccess(t *testing.T) {
 	}
 	if members[0].String() != "seed.olric" {
 		t.Fatalf("Expected seed.olric, Got: %s", members[0].String())
-	}
-}
-
-func BenchmarkAddRemove(b *testing.B) {
-	cfg := newConfig()
-	c := New(nil, cfg)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		member := testMember("node" + strconv.Itoa(i))
-		c.Add(member)
-		c.Remove(member.String())
-	}
-}
-
-func BenchmarkLocateKey(b *testing.B) {
-	cfg := newConfig()
-	c := New(nil, cfg)
-	c.Add(testMember("node1"))
-	c.Add(testMember("node2"))
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		key := []byte("key" + strconv.Itoa(i))
-		c.LocateKey(key)
-	}
-}
-
-func BenchmarkGetClosestN(b *testing.B) {
-	cfg := newConfig()
-	c := New(nil, cfg)
-	for i := 0; i < 10; i++ {
-		c.Add(testMember(fmt.Sprintf("node%d", i)))
-	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		key := []byte("key" + strconv.Itoa(i))
-		_, _ = c.GetClosestN(key, 3)
 	}
 }

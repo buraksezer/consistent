@@ -77,22 +77,22 @@ var ErrInsufficientMemberCount = errors.New("insufficient member count")
 // ErrPartitionNotFound represents an error which means the given partition id is out of range.
 var ErrPartitionNotFound = errors.New("partition not found")
 
-// Hasher is responsible for generating unsigned, 64-bit hash of provided byte slice.
-// Hasher should minimize collisions (generating same hash for different byte slice)
-// and while performance is also important fast functions are preferable (i.e.
+// Hasher is responsible for generating an unsigned, 64-bit hash of the provided byte slice.
+// Hasher should minimize collisions (generating the same hash for different byte slice),
+// and while performance is also important, fast functions are preferable (i.e.
 // you can use FarmHash family).
 type Hasher interface {
 	Sum64([]byte) uint64
 }
 
-// Member interface represents a member in consistent hash ring.
+// Member interface represents a member in the consistent hash ring.
 type Member interface {
 	String() string
 }
 
-// Config represents a structure to control consistent package.
+// Config represents a structure to control the consistent package.
 type Config struct {
-	// Hasher is responsible for generating unsigned, 64-bit hash of provided byte slice.
+	// Hasher is responsible for generating an unsigned, 64-bit hash of the provided byte slice.
 	Hasher Hasher
 
 	// Keys are distributed among partitions. Prime numbers are good to
@@ -104,7 +104,7 @@ type Config struct {
 	// how many times replicated on the ring.
 	ReplicationFactor int
 
-	// Load is used to calculate average load. See the code, the paper and Google's blog post to learn about it.
+	// Load is used to calculate the average load. See the code, the paper and Google's blog post to learn about it.
 	Load float64
 }
 
@@ -403,7 +403,7 @@ func (c *Consistent) GetClosestN(key []byte, count int) ([]Member, error) {
 	return c.getClosestN(partID, count)
 }
 
-// GetClosestNForPartition returns the closest N member for given partition.
+// GetClosestNForPartition returns the closest N member for a given partition.
 // This may be useful to find members for replication. It returns
 // ErrPartitionNotFound if partID is out of range.
 func (c *Consistent) GetClosestNForPartition(partID, count int) ([]Member, error) {

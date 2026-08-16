@@ -135,12 +135,40 @@ This may be useful to find backup nodes to store your key.
 
 Benchmarks
 ----------
-On an early 2015 Macbook:
+On an Apple M4 Pro:
 
 ```
-BenchmarkAddRemove-4     	  100000	     22006 ns/op
-BenchmarkLocateKey-4     	 5000000	       252 ns/op
-BenchmarkGetClosestN-4   	  500000	      2974 ns/op
+$ go test -run=XXX -bench=. -benchmem
+
+goos: darwin
+goarch: arm64
+pkg: github.com/buraksezer/consistent
+cpu: Apple M4 Pro
+BenchmarkNew/partitions=23/members=8-12         	   37102	     30153 ns/op	   24093 B/op	     564 allocs/op
+BenchmarkNew/partitions=23/members=64-12        	     784	   1515623 ns/op	  176063 B/op	    4117 allocs/op
+BenchmarkNew/partitions=271/members=8-12        	   23420	     51233 ns/op	   46418 B/op	     821 allocs/op
+BenchmarkNew/partitions=271/members=64-12       	     775	   1538918 ns/op	  203440 B/op	    4387 allocs/op
+BenchmarkAddRemove/partitions=23/members=8-12   	   94064	     12804 ns/op	    6009 B/op	     196 allocs/op
+BenchmarkAddRemove/partitions=23/members=64-12  	   21493	     55918 ns/op	    8334 B/op	     202 allocs/op
+BenchmarkAddRemove/partitions=271/members=8-12  	   21342	     56083 ns/op	   50246 B/op	     708 allocs/op
+BenchmarkAddRemove/partitions=271/members=64-12 	   10000	    106469 ns/op	   63068 B/op	     741 allocs/op
+BenchmarkFindPartitionID-12                     	343323572	         3.315 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLocateKey/members=8-12                 	100000000	        10.85 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLocateKey/members=512-12               	100000000	        10.42 ns/op	       0 B/op	       0 allocs/op
+BenchmarkGetPartitionOwner-12                   	197541891	         6.070 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAverageLoad-12                         	321314962	         3.728 ns/op	       0 B/op	       0 allocs/op
+BenchmarkGetClosestN/members=8-12               	 2870060	       416.5 ns/op	     416 B/op	      17 allocs/op
+BenchmarkGetClosestN/members=64-12              	  249660	      4763 ns/op	    6664 B/op	      85 allocs/op
+BenchmarkGetClosestN/members=512-12             	   23527	     51169 ns/op	   53864 B/op	     542 allocs/op
+BenchmarkGetMembers/members=8-12                	21827589	        54.65 ns/op	     128 B/op	       1 allocs/op
+BenchmarkGetMembers/members=64-12               	 2895001	       393.3 ns/op	    1152 B/op	       1 allocs/op
+BenchmarkGetMembers/members=512-12              	  364288	      3425 ns/op	    9472 B/op	       1 allocs/op
+BenchmarkLoadDistribution/members=8-12          	 7904462	       152.5 ns/op	     256 B/op	       2 allocs/op
+BenchmarkLoadDistribution/members=64-12         	  433052	      2735 ns/op	    6952 B/op	      11 allocs/op
+BenchmarkLoadDistribution/members=512-12        	   51364	     23206 ns/op	   54408 B/op	      17 allocs/op
+BenchmarkLocateKeyParallel-12                   	 8768479	       144.9 ns/op	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/buraksezer/consistent	34.865s
 ```
 
 Examples
