@@ -117,9 +117,9 @@ type Consistent struct {
 	sortedSet      []uint64
 	partitionCount uint64
 	loads          map[string]float64
-	members        map[string]*Member
-	partitions     map[int]*Member
-	ring           map[uint64]*Member
+	members        map[string]Member
+	partitions     map[int]Member
+	ring           map[uint64]Member
 }
 
 // New creates and returns a new Consistent object.
@@ -139,9 +139,9 @@ func New(members []Member, config Config) *Consistent {
 
 	c := &Consistent{
 		config:         config,
-		members:        make(map[string]*Member),
+		members:        make(map[string]Member),
 		partitionCount: uint64(config.PartitionCount),
-		ring:           make(map[uint64]*Member),
+		ring:           make(map[uint64]Member),
 	}
 
 	c.hasher = config.Hasher
@@ -162,7 +162,7 @@ func (c *Consistent) GetMembers() []Member {
 	// Create a thread-safe copy of member list.
 	members := make([]Member, 0, len(c.members))
 	for _, member := range c.members {
-		members = append(members, *member)
+		members = append(members, member)
 	}
 	return members
 }
@@ -184,7 +184,7 @@ func (c *Consistent) averageLoad() float64 {
 	return math.Ceil(avgLoad)
 }
 
-func (c *Consistent) distributeWithLoad(partID, idx int, partitions map[int]*Member, loads map[string]float64) {
+func (c *Consistent) distributeWithLoad(partID, idx int, partitions map[int]Member, loads map[string]float64) {
 	avgLoad := c.averageLoad()
 	var count int
 	for {
@@ -196,10 +196,10 @@ func (c *Consistent) distributeWithLoad(partID, idx int, partitions map[int]*Mem
 			panic("not enough room to distribute partitions")
 		}
 		i := c.sortedSet[idx]
-		member := *c.ring[i]
+		member := c.ring[i]
 		load := loads[member.String()]
 		if load+1 <= avgLoad {
-			partitions[partID] = &member
+			partitions[partID] = member
 			loads[member.String()]++
 			return
 		}
@@ -212,7 +212,7 @@ func (c *Consistent) distributeWithLoad(partID, idx int, partitions map[int]*Mem
 
 func (c *Consistent) distributePartitions() {
 	loads := make(map[string]float64)
-	partitions := make(map[int]*Member)
+	partitions := make(map[int]Member)
 
 	bs := make([]byte, 8)
 	for partID := uint64(0); partID < c.partitionCount; partID++ {
@@ -241,7 +241,7 @@ func (c *Consistent) add(member Member) {
 	for i := 0; i < c.config.ReplicationFactor; i++ {
 		key := replicaKey(member.String(), i)
 		h := c.hasher.Sum64(key)
-		c.ring[h] = &member
+		c.ring[h] = member
 		c.sortedSet = append(c.sortedSet, h)
 	}
 	// sort hashes ascendingly
@@ -249,7 +249,7 @@ func (c *Consistent) add(member Member) {
 		return c.sortedSet[i] < c.sortedSet[j]
 	})
 	// Storing member at this map is useful to find backup members of a partition.
-	c.members[member.String()] = &member
+	c.members[member.String()] = member
 }
 
 // Add adds a new member to the consistent hash circle.
@@ -293,7 +293,7 @@ func (c *Consistent) Remove(name string) {
 	delete(c.members, name)
 	if len(c.members) == 0 {
 		// consistent hash ring is empty now. Reset the partition table.
-		c.partitions = make(map[int]*Member)
+		c.partitions = make(map[int]Member)
 		return
 	}
 	c.distributePartitions()
@@ -333,10 +333,10 @@ func (c *Consistent) getPartitionOwner(partID int) Member {
 		return nil
 	}
 	// Create a thread-safe copy of member and return it.
-	return *member
+	return member
 }
 
-// LocateKey finds a home for given key
+// LocateKey finds a home for the given key.
 func (c *Consistent) LocateKey(key []byte) Member {
 	partID := c.FindPartitionID(key)
 	return c.GetPartitionOwner(partID)
@@ -360,7 +360,7 @@ func (c *Consistent) getClosestN(partID, count int) ([]Member, error) {
 	owner := c.getPartitionOwner(partID)
 	// Hash and sort all the names.
 	var keys []uint64
-	kmems := make(map[uint64]*Member)
+	kmems := make(map[uint64]Member)
 	for name, member := range c.members {
 		key := c.hasher.Sum64([]byte(name))
 		if name == owner.String() {
@@ -378,7 +378,7 @@ func (c *Consistent) getClosestN(partID, count int) ([]Member, error) {
 	for idx < len(keys) {
 		if keys[idx] == ownerKey {
 			key := keys[idx]
-			res = append(res, *kmems[key])
+			res = append(res, kmems[key])
 			break
 		}
 		idx++
@@ -391,7 +391,7 @@ func (c *Consistent) getClosestN(partID, count int) ([]Member, error) {
 			idx = 0
 		}
 		key := keys[idx]
-		res = append(res, *kmems[key])
+		res = append(res, kmems[key])
 	}
 	return res, nil
 }

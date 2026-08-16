@@ -50,7 +50,7 @@ type hasher struct{}
 
 func (hs hasher) Sum64(data []byte) uint64 {
 	h := fnv.New64()
-	h.Write(data)
+	_, _ = h.Write(data)
 	return h.Sum64()
 }
 
@@ -302,8 +302,8 @@ func TestConsistentReplicaKeyCollision(t *testing.T) {
 		t.Fatalf("Expected %d hashes in sortedSet, Got: %d", cfg.ReplicationFactor, len(c.sortedSet))
 	}
 	for h, member := range c.ring {
-		if (*member).String() != "member" {
-			t.Fatalf("Position %d belongs to %s, expected member", h, (*member).String())
+		if member.String() != "member" {
+			t.Fatalf("Position %d belongs to %s, expected member", h, member.String())
 		}
 	}
 }
