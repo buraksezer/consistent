@@ -90,6 +90,15 @@ type Member interface {
 	String() string
 }
 
+// ReplicationFactorMember is an optional interface. Implement it on your Member
+// when you want that specific member to have its own replication factor instead
+// of the one set in Config. Members that don't implement this still fall back
+// to config.ReplicationFactor, so this is fully backwards compatible.
+type ReplicationFactorMember interface {
+	Member
+	ReplicationFactor() int
+}
+
 // Config represents a structure to control the consistent package.
 type Config struct {
 	// Hasher is responsible for generating an unsigned, 64-bit hash of the provided byte slice.
@@ -237,8 +246,18 @@ func replicaKey(name string, idx int) []byte {
 	return []byte(fmt.Sprintf("%d:%s", idx, name))
 }
 
+// replicationFactor returns how many vnodes a member should get. If the member
+// implements ReplicationFactorMember we use its own value, otherwise we fall
+// back to the global config.
+func (c *Consistent) replicationFactor(member Member) int {
+	if m, ok := member.(ReplicationFactorMember); ok {
+		return m.ReplicationFactor()
+	}
+	return c.config.ReplicationFactor
+}
+
 func (c *Consistent) add(member Member) {
-	for i := 0; i < c.config.ReplicationFactor; i++ {
+	for i := 0; i < c.replicationFactor(member); i++ {
 		key := replicaKey(member.String(), i)
 		h := c.hasher.Sum64(key)
 		c.ring[h] = member
@@ -279,12 +298,13 @@ func (c *Consistent) Remove(name string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, ok := c.members[name]; !ok {
+	member, ok := c.members[name]
+	if !ok {
 		// There is no member with that name. Quit immediately.
 		return
 	}
 
-	for i := 0; i < c.config.ReplicationFactor; i++ {
+	for i := 0; i < c.replicationFactor(member); i++ {
 		key := replicaKey(name, i)
 		h := c.hasher.Sum64(key)
 		delete(c.ring, h)

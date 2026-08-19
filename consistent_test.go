@@ -46,6 +46,21 @@ func (tm testMember) String() string {
 	return string(tm)
 }
 
+// weightedMember lets a test node carry its own replication factor,
+// so heavier nodes can claim more of the ring than the default.
+type weightedMember struct {
+	name string
+	rf   int
+}
+
+func (w weightedMember) String() string {
+	return w.name
+}
+
+func (w weightedMember) ReplicationFactor() int {
+	return w.rf
+}
+
 type hasher struct{}
 
 func (hs hasher) Sum64(data []byte) uint64 {
@@ -535,5 +550,47 @@ func TestConsistentConcurrentAccess(t *testing.T) {
 	}
 	if members[0].String() != "seed.olric" {
 		t.Fatalf("Expected seed.olric, Got: %s", members[0].String())
+	}
+}
+
+// A member with a bigger replication factor should end up owning more
+// vnodes on the ring, and Remove should clean up exactly what Add put there.
+func TestConsistentPerMemberReplicationFactor(t *testing.T) {
+	cfg := newConfig()
+	cfg.ReplicationFactor = 10
+
+	big := weightedMember{name: "big.olric", rf: 40}
+	small := testMember("small.olric") // no ReplicationFactorMember, uses cfg default (10)
+
+	c := New([]Member{big, small}, cfg)
+
+	var bigCount, smallCount int
+	for _, owner := range c.ring {
+		switch owner.String() {
+		case "big.olric":
+			bigCount++
+		case "small.olric":
+			smallCount++
+		}
+	}
+
+	if bigCount != 40 {
+		t.Fatalf("Expected 40 vnodes for big.olric, Got: %d", bigCount)
+	}
+	if smallCount != 10 {
+		t.Fatalf("Expected 10 vnodes for small.olric, Got: %d", smallCount)
+	}
+	if len(c.ring) != 50 {
+		t.Fatalf("Expected 50 total vnodes on the ring, Got: %d", len(c.ring))
+	}
+
+	c.Remove("big.olric")
+	if len(c.ring) != 10 {
+		t.Fatalf("Expected 10 vnodes left after removing big.olric, Got: %d", len(c.ring))
+	}
+	for _, owner := range c.ring {
+		if owner.String() == "big.olric" {
+			t.Fatal("big.olric vnodes were not fully removed from the ring")
+		}
 	}
 }
