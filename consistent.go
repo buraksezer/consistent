@@ -106,6 +106,9 @@ type Config struct {
 
 	// Load is used to calculate the average load. See the code, the paper and Google's blog post to learn about it.
 	Load float64
+
+	// ReplicaKey is a function that builds the ring key of a virtual node.
+	ReplicaKey func(name string, idx int) []byte
 }
 
 // Consistent holds the information about the members of the consistent hash circle.
@@ -135,6 +138,9 @@ func New(members []Member, config Config) *Consistent {
 	}
 	if config.Load == 0 {
 		config.Load = DefaultLoad
+	}
+	if config.ReplicaKey == nil {
+		config.ReplicaKey = DefaultReplicaKey
 	}
 
 	c := &Consistent{
@@ -230,16 +236,16 @@ func (c *Consistent) distributePartitions() {
 	c.loads = loads
 }
 
-// replicaKey builds the ring key of a virtual node. The index comes first,
+// DefaultReplicaKey builds the ring key of a virtual node. The index comes first,
 // then a colon, then the member name. This order keeps the two parts apart.
 // See https://github.com/buraksezer/consistent/issues/17
-func replicaKey(name string, idx int) []byte {
+func DefaultReplicaKey(name string, idx int) []byte {
 	return []byte(fmt.Sprintf("%d:%s", idx, name))
 }
 
 func (c *Consistent) add(member Member) {
 	for i := 0; i < c.config.ReplicationFactor; i++ {
-		key := replicaKey(member.String(), i)
+		key := c.config.ReplicaKey(member.String(), i)
 		h := c.hasher.Sum64(key)
 		c.ring[h] = member
 		c.sortedSet = append(c.sortedSet, h)
@@ -285,7 +291,7 @@ func (c *Consistent) Remove(name string) {
 	}
 
 	for i := 0; i < c.config.ReplicationFactor; i++ {
-		key := replicaKey(name, i)
+		key := c.config.ReplicaKey(name, i)
 		h := c.hasher.Sum64(key)
 		delete(c.ring, h)
 		c.delSlice(h)
