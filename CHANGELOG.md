@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.0
+
+### Added
+
+- `Config.ReplicaKey`. You can now give your own function to build the ring key
+  of a virtual node. If you leave it empty, the package uses
+  `DefaultReplicaKey`. (#32)
+- `DefaultReplicaKey` is now exported. It is the existing, internal `replicaKey`
+  function.
+
 ## 1.0.0
 
 ### Fixed
