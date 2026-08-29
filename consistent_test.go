@@ -266,7 +266,7 @@ func TestConsistentDistributeWithLoadExhausted(t *testing.T) {
 // The old code put the index after the member name. So "member" with index 10
 // and "member1" with index 0 gave the same key: "member10". Both members used
 // one position on the ring.
-func TestConsistentReplicaKeyCollision(t *testing.T) {
+func TestConsistentDefaultReplicaKeyCollision(t *testing.T) {
 	cfg := Config{
 		PartitionCount:    23,
 		ReplicationFactor: 11,
@@ -308,7 +308,7 @@ func TestConsistentReplicaKeyCollision(t *testing.T) {
 	}
 }
 
-func TestConsistentReplicaKey(t *testing.T) {
+func TestConsistentDefaultReplicaKey(t *testing.T) {
 	// The key format is index, colon, member name.
 	cases := []struct {
 		name string
@@ -320,8 +320,36 @@ func TestConsistentReplicaKey(t *testing.T) {
 		{name: "node0.olric", idx: 3, key: "3:node0.olric"},
 	}
 	for _, tc := range cases {
-		if got := string(replicaKey(tc.name, tc.idx)); got != tc.key {
+		if got := string(DefaultReplicaKey(tc.name, tc.idx)); got != tc.key {
 			t.Fatalf("Expected %s, Got: %s", tc.key, got)
+		}
+	}
+}
+
+func TestConsistentConfigurableReplicaKey(t *testing.T) {
+	cfg := newConfig()
+	cfg.ReplicationFactor = 3
+	cfg.ReplicaKey = func(name string, idx int) []byte {
+		return []byte(fmt.Sprintf("replica/%s/%d", name, idx))
+	}
+
+	members := []Member{testMember("member"), testMember("member1")}
+	c := New(members, cfg)
+
+	for _, member := range members {
+		for idx := 0; idx < cfg.ReplicationFactor; idx++ {
+			hash := cfg.Hasher.Sum64(cfg.ReplicaKey(member.String(), idx))
+			if got := c.ring[hash]; got != member {
+				t.Fatalf("Expected replica %d of %s on the ring, Got: %v", idx, member, got)
+			}
+		}
+	}
+
+	c.Remove("member1")
+	for idx := 0; idx < cfg.ReplicationFactor; idx++ {
+		hash := cfg.Hasher.Sum64(cfg.ReplicaKey("member1", idx))
+		if _, ok := c.ring[hash]; ok {
+			t.Fatalf("Expected replica %d of member1 to be removed", idx)
 		}
 	}
 }
