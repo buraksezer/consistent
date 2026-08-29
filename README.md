@@ -91,7 +91,7 @@ Configuration
 
 ```go
 type Config struct {
-	// Hasher is responsible for generating unsigned, 64 bit hash of provided byte slice.
+	// Hasher is responsible for generating an unsigned, 64-bit hash of the provided byte slice.
 	Hasher Hasher
 
 	// Keys are distributed among partitions. Prime numbers are good to
@@ -99,13 +99,15 @@ type Config struct {
 	// too many keys.
 	PartitionCount int
 
-	// Members are replicated on consistent hash ring. This number controls
-	// the number each member is replicated on the ring.
+	// Members are replicated on consistent hash ring. This number means that a member
+	// how many times replicated on the ring.
 	ReplicationFactor int
 
-	// Load is used to calculate average load. See the code, the paper and Google's 
-	// blog post to learn about it.
+	// Load is used to calculate the average load. See the code, the paper and Google's blog post to learn about it.
 	Load float64
+
+	// ReplicaKey is a function that builds the ring key of a virtual node.
+	ReplicaKey func(name string, idx int) []byte
 }
 ```
 
