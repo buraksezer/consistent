@@ -565,3 +565,31 @@ func TestConsistentConcurrentAccess(t *testing.T) {
 		t.Fatalf("Expected seed.olric, Got: %s", members[0].String())
 	}
 }
+
+func TestRemoveDuplicateInitialMember(t *testing.T) {
+	c := New([]Member{testMember("a"), testMember("a"), testMember("b")}, newConfig())
+	c.Remove("a")
+	if len(c.GetMembers()) != 1 {
+		t.Fatal("expected one remaining member")
+	}
+	for part := 0; part < newConfig().PartitionCount; part++ {
+		if owner := c.GetPartitionOwner(part); owner == nil || owner.String() != "b" {
+			t.Fatalf("partition %d owner = %v, want b", part, owner)
+		}
+	}
+}
+
+func TestRemoveLastMemberClearsLoadDistribution(t *testing.T) {
+	c := New([]Member{testMember("a")}, newConfig())
+	c.Remove("a")
+	if loads := c.LoadDistribution(); len(loads) != 0 {
+		t.Fatalf("removed member still has load: %v", loads)
+	}
+	if c.AverageLoad() != 0 {
+		t.Fatal("empty ring has nonzero average load")
+	}
+	c.Add(testMember("b"))
+	if loads := c.LoadDistribution(); len(loads) != 1 || loads["b"] != float64(newConfig().PartitionCount) {
+		t.Fatalf("unexpected load after repopulating ring: %v", loads)
+	}
+}

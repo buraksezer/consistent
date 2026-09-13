@@ -244,6 +244,9 @@ func DefaultReplicaKey(name string, idx int) []byte {
 }
 
 func (c *Consistent) add(member Member) {
+	if _, exists := c.members[member.String()]; exists {
+		return
+	}
 	for i := 0; i < c.config.ReplicationFactor; i++ {
 		key := c.config.ReplicaKey(member.String(), i)
 		h := c.hasher.Sum64(key)
@@ -300,6 +303,7 @@ func (c *Consistent) Remove(name string) {
 	if len(c.members) == 0 {
 		// consistent hash ring is empty now. Reset the partition table.
 		c.partitions = make(map[int]Member)
+		c.loads = make(map[string]float64)
 		return
 	}
 	c.distributePartitions()
